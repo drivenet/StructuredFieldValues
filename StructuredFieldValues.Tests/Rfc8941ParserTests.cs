@@ -45,7 +45,9 @@ namespace StructuredFieldValues.Tests
         [InlineData("-913vwe", -913)]
         [InlineData("1239712839", 1239712839)]
         [InlineData("1328409328402340", 1328409328402340.0)]
+        [InlineData("484944311926.6", 484944311926.6)]
         [InlineData("472389478934.123", 472389478934.123)]
+        [InlineData("987654321098765", 987654321098765)]
         public void ParseNumberWorks(string data, double value)
         {
             Assert.Equal(value, Rfc8941Parser.ParseNumber(data).Unwrap());
@@ -53,6 +55,11 @@ namespace StructuredFieldValues.Tests
 
         [Theory]
         [InlineData("472389478934.1234")]
+        [InlineData("9876543210987654.")]
+        [InlineData("9876543210981.0")]
+        [InlineData("9876543210987.123")]
+        [InlineData("98765432109876.12")]
+        [InlineData("987654321098765.1")]
         public void ParseNumberFailsCorrectly(string data)
         {
             Assert.Throws<FormatException>(() => Rfc8941Parser.ParseNumber(data).Unwrap());
