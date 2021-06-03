@@ -11,7 +11,18 @@ namespace StructuredFieldValues.Tests
         [InlineData("?1", true)]
         [InlineData("?092379f&((*&3", false)]
         [InlineData("?1dmfsldjf*2834y392", true)]
-        public void ParseBareItemWorks(string data, bool value)
+        [InlineData("0", 0.0)]
+        [InlineData("1", 1.0)]
+        [InlineData("-17", -17.0)]
+        [InlineData("2873913q123", 2873913.0)]
+        [InlineData("1zxcc", 1.0)]
+        [InlineData("-913vwe", -913.0)]
+        [InlineData("1239712839", 1239712839.0)]
+        [InlineData("1328409328402340", 1328409328402340.0)]
+        [InlineData("484944311926.6", 484944311926.6)]
+        [InlineData("472389478934.123", 472389478934.123)]
+        [InlineData("987654321098765", 987654321098765.0)]
+        public void ParseBareItemWorks(string data, object value)
         {
             Assert.Equal(value, Rfc8941Parser.ParseBareItem(data).Unwrap());
         }
@@ -37,17 +48,17 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
-        [InlineData("0", 0)]
-        [InlineData("1", 1)]
-        [InlineData("-17", -17)]
-        [InlineData("2873913q123", 2873913)]
-        [InlineData("1zxcc", 1)]
-        [InlineData("-913vwe", -913)]
-        [InlineData("1239712839", 1239712839)]
+        [InlineData("0", 0.0)]
+        [InlineData("1", 1.0)]
+        [InlineData("-17", -17.0)]
+        [InlineData("2873913q123", 2873913.0)]
+        [InlineData("1zxcc", 1.0)]
+        [InlineData("-913vwe", -913.0)]
+        [InlineData("1239712839", 1239712839.0)]
         [InlineData("1328409328402340", 1328409328402340.0)]
         [InlineData("484944311926.6", 484944311926.6)]
         [InlineData("472389478934.123", 472389478934.123)]
-        [InlineData("987654321098765", 987654321098765)]
+        [InlineData("987654321098765", 987654321098765.0)]
         public void ParseNumberWorks(string data, double value)
         {
             Assert.Equal(value, Rfc8941Parser.ParseNumber(data).Unwrap());
