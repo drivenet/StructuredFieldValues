@@ -199,8 +199,9 @@ namespace StructuredFieldValues
             }
 
             ++index;
+            var initialIndex = index;
 
-            var result = new StringBuilder(spanLength - 2);
+            StringBuilder? buffer = null;
             while (index < spanLength)
             {
                 var character = source[index];
@@ -218,7 +219,18 @@ namespace StructuredFieldValues
                         {
                             case '\\':
                             case '"':
-                                result.Append(character);
+                                if (buffer is null)
+                                {
+                                    buffer = new StringBuilder(spanLength - 2);
+                                    var slice = source.Slice(initialIndex, index - initialIndex - 1);
+#if NET5_0_OR_GREATER
+                                    buffer.Append(slice);
+#else
+                                    buffer.Append(slice.ToArray());
+#endif
+                                }
+
+                                buffer.Append(character);
                                 break;
 
                             default:
@@ -228,8 +240,23 @@ namespace StructuredFieldValues
                         break;
 
                     case '"':
+                        string result;
+                        if (buffer is object)
+                        {
+                            result = buffer.ToString();
+                        }
+                        else
+                        {
+                            var slice = source.Slice(initialIndex, index - initialIndex);
+#if NET5_0_OR_GREATER
+                            result = new string(slice);
+#else
+                            result = new string(slice.ToArray());
+#endif
+                        }
+
                         ++index;
-                        return new(result.ToString());
+                        return new(result);
 
                     default:
                         if (character is < (char)0x1F or > (char)0x7F)
@@ -237,7 +264,7 @@ namespace StructuredFieldValues
                             return new(index, "string character is out of range");
                         }
 
-                        result.Append(character);
+                        buffer?.Append(character);
                         break;
                 }
 
