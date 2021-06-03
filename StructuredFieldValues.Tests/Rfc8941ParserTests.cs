@@ -22,6 +22,12 @@ namespace StructuredFieldValues.Tests
         [InlineData("484944311926.6", 484944311926.6)]
         [InlineData("472389478934.123", 472389478934.123)]
         [InlineData("987654321098765", 987654321098765.0)]
+        [InlineData("\"\"", "")]
+        [InlineData("\"!\"", "!")]
+        [InlineData("\"abc def\"", "abc def")]
+        [InlineData("\"d34234efghi\"qwjeoiwqe", "d34234efghi")]
+        [InlineData("\"abc\\\\ def\"", "abc\\ def")]
+        [InlineData("\"quotes \\\"72893d\\\" wejp18 \"", "quotes \"72893d\" wejp18 ")]
         public void ParseBareItemWorks(string data, object value)
         {
             Assert.Equal(value, Rfc8941Parser.ParseBareItem(data).Unwrap());
@@ -74,6 +80,32 @@ namespace StructuredFieldValues.Tests
         public void ParseNumberFailsCorrectly(string data)
         {
             Assert.Throws<FormatException>(() => Rfc8941Parser.ParseNumber(data).Unwrap());
+        }
+
+        [Theory]
+        [InlineData("\"\"", "")]
+        [InlineData("\"!\"", "!")]
+        [InlineData("\"abc def\"", "abc def")]
+        [InlineData("\"d34234efghi\"qwjeoiwqe", "d34234efghi")]
+        [InlineData("\"abc\\\\ def\"", "abc\\ def")]
+        [InlineData("\"quotes \\\"72893d\\\" wejp18 \"", "quotes \"72893d\" wejp18 ")]
+        public void ParseStringWorks(string data, string value)
+        {
+            Assert.Equal(value, Rfc8941Parser.ParseString(data).Unwrap());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("\"")]
+        [InlineData("a bc\"")]
+        [InlineData("\"d34234e fghiqwjeoiwqe")]
+        [InlineData("\"тест\"")]
+        [InlineData("\"cr\r\nlf\"")]
+        [InlineData("\"quotes \\Q72893d\\\" wejp18 \"")]
+        [InlineData("\"escaping \\")]
+        public void ParseStringFailsCorrectly(string data)
+        {
+            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseString(data).Unwrap());
         }
     }
 }

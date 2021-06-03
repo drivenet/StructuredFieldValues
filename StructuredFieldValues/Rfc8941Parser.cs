@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Text;
 
 namespace StructuredFieldValues
 {
@@ -33,6 +34,9 @@ namespace StructuredFieldValues
                 case '9':
                     return ParseNumber(source, index).Map(i => (object)i);
 
+                case '"':
+                    return ParseString(source, index).Map(i => (object)i);
+
                 default:
                     return new(index, "invalid discriminator");
             }
@@ -64,7 +68,8 @@ namespace StructuredFieldValues
         public static ParseResult<double> ParseNumber(ReadOnlySpan<char> source, int index = 0)
         {
             CheckIndex(index);
-            if (source.Length - index < 1)
+            var spanLength = source.Length;
+            if (spanLength - index < 1)
             {
                 return new(index, "insufficient characters for number");
             }
@@ -78,7 +83,7 @@ namespace StructuredFieldValues
             var separatorIndex = -1;
             var initialIndex = index;
 
-            while (index < source.Length)
+            while (index < spanLength)
             {
                 var character = source[index];
                 var earlyBreak = false;
@@ -179,12 +184,77 @@ namespace StructuredFieldValues
             return new(value);
         }
 
+        public static ParseResult<string> ParseString(ReadOnlySpan<char> source, int index = 0)
+        {
+            CheckIndex(index);
+            var spanLength = source.Length;
+            if (spanLength - index < 2)
+            {
+                return new(index, "insufficient characters for string");
+            }
+
+            if (source[index] != '"')
+            {
+                return new(index, "missing opening double quote");
+            }
+
+            ++index;
+
+            var result = new StringBuilder(spanLength - 2);
+            while (index < spanLength)
+            {
+                var character = source[index];
+                switch (character)
+                {
+                    case '\\':
+                        ++index;
+                        if (index >= spanLength)
+                        {
+                            return new(index, "missing escaped character");
+                        }
+
+                        character = source[index];
+                        switch (character)
+                        {
+                            case '\\':
+                            case '"':
+                                result.Append(character);
+                                break;
+
+                            default:
+                                return new(index, "invalid escaped character");
+                        }
+
+                        break;
+
+                    case '"':
+                        ++index;
+                        return new(result.ToString());
+
+                    default:
+                        if (character is < (char)0x1F or > (char)0x7F)
+                        {
+                            return new(index, "string character is out of range");
+                        }
+
+                        result.Append(character);
+                        break;
+                }
+
+                ++index;
+            }
+
+            return new(index, "missing closing double quote");
+        }
+
 #if !NET5_0_OR_GREATER
         public static ParseResult<object> ParseBareItem(string source) => ParseBareItem(source.AsSpan());
 
         public static ParseResult<bool> ParseBoolean(string source) => ParseBoolean(source.AsSpan());
 
         public static ParseResult<double> ParseNumber(string source) => ParseNumber(source.AsSpan());
+
+        public static ParseResult<string> ParseString(string source) => ParseString(source.AsSpan());
 #endif
 
         private static int SkipSP(ReadOnlySpan<char> source, int index)
