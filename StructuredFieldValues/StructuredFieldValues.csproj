@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\shared\Minimal.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>$(LibraryTargetFramework);$(ApplicationTargetFramework)</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <Version>0.1.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+  </ItemGroup>
+</Project>

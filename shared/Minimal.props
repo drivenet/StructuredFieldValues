@@ -1,0 +1,69 @@
+﻿<Project>
+  <PropertyGroup Label="TopLevelPathDefaults">
+    <DnetSharedPath Condition="'$(DnetSharedPath)' == ''">$(MSBuildThisFileDirectory)</DnetSharedPath>
+  </PropertyGroup>
+
+  <PropertyGroup Label="AvailableTargetFrameworks">
+    <LegacyTargetFramework>net472</LegacyTargetFramework>
+    <LegacyTargetFrameworkVersion>v4.7.2</LegacyTargetFrameworkVersion>
+    <LibraryTargetFramework>netstandard2.0</LibraryTargetFramework>
+    <ApplicationTargetFramework>net5.0</ApplicationTargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Label="MinimalProjectSettings">
+    <Authors>DRIVE.NET, Inc.</Authors>
+    <Product>DRIVE.NET, Inc. projects</Product>
+    <Copyright>Copyright © DRIVE.NET, Inc.</Copyright>
+    <Description>-</Description>
+    <NeutralLanguage>en</NeutralLanguage>
+    <LangVersion>latest</LangVersion>
+    <Configurations>$(Configurations);Integration</Configurations>
+    <DebugType>embedded</DebugType>
+    <Platforms>x64</Platforms>
+    <Platform>x64</Platform>
+    <AnalysisLevel>5</AnalysisLevel>
+    <WarningsAsErrors>CS8073;nullable</WarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Features>strict</Features>
+  </PropertyGroup>
+
+  <ItemGroup Label="MinimalAnalyzerFiles">
+    <AdditionalFiles Include="$(DnetSharedPath)\stylecop.json">
+      <Link>stylecop.json</Link>
+      <Visible>false</Visible>
+    </AdditionalFiles>
+    <AdditionalFiles Include="$(DnetSharedPath)\CodeMetricsConfig.txt">
+      <Link>CodeMetricsConfig.txt</Link>
+      <Visible>false</Visible>
+    </AdditionalFiles>
+  </ItemGroup>
+
+  <ItemGroup Label="MinimalAnalyzerReferences">
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.333" />
+  </ItemGroup>
+
+  <Target 
+        Name="DisableAnalyzersForVisualStudioBuild" 
+        BeforeTargets="CoreCompile" 
+        Condition="('$(BuildingInsideVisualStudio)' == 'True' Or '$(DeployOnBuild)' == 'True')
+            And '$(BuildingProject)' == 'True' 
+            And '$(Configuration)' != 'Integration'">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)"/>
+    </ItemGroup>
+  </Target>
+
+  <PropertyGroup Label="MsBuildAL1073WarningFix">
+    <SdkToolsPathMaybeWithx64Architecture>C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64</SdkToolsPathMaybeWithx64Architecture>
+  </PropertyGroup>
+
+  <Target 
+        Name="MsBuildAL1073WarningWorkaround" 
+        BeforeTargets="GenerateSatelliteAssemblies"
+        Condition="'$(PlatformTarget)' == 'x64'">
+    <PropertyGroup>
+      <TargetFrameworkSDKToolsDirectory>$(TargetFrameworkSDKToolsDirectory)x64\</TargetFrameworkSDKToolsDirectory>
+    </PropertyGroup>
+  </Target>
+</Project>
