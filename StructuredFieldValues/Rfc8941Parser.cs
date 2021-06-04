@@ -18,9 +18,6 @@ namespace StructuredFieldValues
             var discriminator = source[index];
             switch (discriminator)
             {
-                case '?':
-                    return ParseBoolean(source, index).Map(i => (object)i);
-
                 case '-':
                 case '0':
                 case '1':
@@ -32,12 +29,24 @@ namespace StructuredFieldValues
                 case '7':
                 case '8':
                 case '9':
-                    return ParseNumber(source, index).Map(i => (object)i);
+                    return ParseNumber(source, index).Box();
 
                 case '"':
-                    return ParseString(source, index).Map(i => (object)i);
+                    return ParseString(source, index).Box();
+
+                case '*':
+                    return ParseToken(source, index).Box();
+
+                case '?':
+                    return ParseBoolean(source, index).Box();
 
                 default:
+                    // Rare case for Tokens, placing all these cases in switch would be inconvenient
+                    if (discriminator is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z'))
+                    {
+                        return ParseToken(source, index).Box();
+                    }
+
                     return new(index, "invalid discriminator");
             }
         }
@@ -274,6 +283,43 @@ namespace StructuredFieldValues
             return new(index, "missing closing double quote");
         }
 
+        public static ParseResult<string> ParseToken(ReadOnlySpan<char> source, int index = 0)
+        {
+            CheckIndex(index);
+            var spanLength = source.Length;
+            if (spanLength - index < 1)
+            {
+                return new(index, "insufficient characters for token");
+            }
+
+            var character = source[index];
+            if (character is not ((>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '*'))
+            {
+                return new(index, "invalid leading token character");
+            }
+
+            var initialIndex = index++;
+            while (index < spanLength)
+            {
+                character = source[index];
+                if (character is not ((>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9')
+                    or '!' or '#' or '$' or '%' or '&' or '\'' or '*' or '+' or '-' or '.' or '^' or '_' or '`' or '|' or '~'))
+                {
+                    break;
+                }
+
+                ++index;
+            }
+
+            var slice = source.Slice(initialIndex, index - initialIndex);
+#if NET5_0_OR_GREATER
+            var result = new string(slice);
+#else
+            var result = new string(slice.ToArray());
+#endif
+            return new(result);
+        }
+
 #if !NET5_0_OR_GREATER
         public static ParseResult<object> ParseBareItem(string source) => ParseBareItem(source.AsSpan());
 
@@ -282,6 +328,8 @@ namespace StructuredFieldValues
         public static ParseResult<double> ParseNumber(string source) => ParseNumber(source.AsSpan());
 
         public static ParseResult<string> ParseString(string source) => ParseString(source.AsSpan());
+
+        public static ParseResult<string> ParseToken(string source) => ParseToken(source.AsSpan());
 #endif
 
         private static int SkipSP(ReadOnlySpan<char> source, int index)

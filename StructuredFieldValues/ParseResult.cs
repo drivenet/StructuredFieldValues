@@ -72,15 +72,25 @@ namespace StructuredFieldValues
             return Result;
         }
 
+        public ParseResult<object> Box()
+        {
+            if (_message is { } message)
+            {
+                return new(_offset, message);
+            }
+
+            return new(Result);
+        }
+
         public ParseResult<TOtherResult> Map<TOtherResult>(Func<TResult, TOtherResult> map)
             where TOtherResult : notnull
         {
             if (_message is { } message)
             {
-                return new ParseResult<TOtherResult>(_offset, message);
+                return new(_offset, message);
             }
 
-            return new ParseResult<TOtherResult>(map(Result));
+            return new(map(Result));
         }
     }
 }

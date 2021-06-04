@@ -28,6 +28,12 @@ namespace StructuredFieldValues.Tests
         [InlineData("\"d34234efghi\"qwjeoiwqe", "d34234efghi")]
         [InlineData("\"abc\\\\ def\"", "abc\\ def")]
         [InlineData("\"quotes \\\"72893d\\\" wejp18 \"", "quotes \"72893d\" wejp18 ")]
+        [InlineData("TOK3N", "TOK3N")]
+        [InlineData("*Test-Token.", "*Test-Token.")]
+        [InlineData("TestT0ken\tWithTabs", "TestT0ken")]
+        [InlineData("*!#$%^&+-.~'`^_|~", "*!#$%^&+-.~'`^_|~")]
+        [InlineData("*!@#$%^&+-.~'`^_|~", "*!")]
+        [InlineData("*!#$%^&+-.~'`^_@|~", "*!#$%^&+-.~'`^_")]
         public void ParseBareItemWorks(string data, object value)
         {
             Assert.Equal(value, Rfc8941Parser.ParseBareItem(data).Unwrap());
@@ -106,6 +112,31 @@ namespace StructuredFieldValues.Tests
         public void ParseStringFailsCorrectly(string data)
         {
             Assert.Throws<FormatException>(() => Rfc8941Parser.ParseString(data).Unwrap());
+        }
+
+        [Theory]
+        [InlineData("TOK3N", "TOK3N")]
+        [InlineData("*Test-Token.", "*Test-Token.")]
+        [InlineData("TestT0ken\tWithTabs", "TestT0ken")]
+        [InlineData("*!#$%^&+-.~'`^_|~", "*!#$%^&+-.~'`^_|~")]
+        [InlineData("*!@#$%^&+-.~'`^_|~", "*!")]
+        [InlineData("*!#$%^&+-.~'`^_@|~", "*!#$%^&+-.~'`^_")]
+        public void ParseTokenWorks(string data, string value)
+        {
+            Assert.Equal(value, Rfc8941Parser.ParseToken(data).Unwrap());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(" TEST")]
+        [InlineData("\"TEST\"")]
+        [InlineData("!")]
+        [InlineData("7 Test")]
+        [InlineData("1Token")]
+        [InlineData("9AFUH162")]
+        public void ParseTokenFailsCorrectly(string data)
+        {
+            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseToken(data).Unwrap());
         }
     }
 }
