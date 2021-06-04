@@ -34,9 +34,17 @@ namespace StructuredFieldValues.Tests
         [InlineData("*!#$%^&+-.~'`^_|~", "*!#$%^&+-.~'`^_|~")]
         [InlineData("*!@#$%^&+-.~'`^_|~", "*!")]
         [InlineData("*!#$%^&+-.~'`^_@|~", "*!#$%^&+-.~'`^_")]
+        [InlineData("::", "")]
+        [InlineData(":YWpyOTgyMzd5czdyZXkzd3I=:", "YWpyOTgyMzd5czdyZXkzd3I=")]
         public void ParseBareItemWorks(string data, object value)
         {
-            Assert.Equal(value, Rfc8941Parser.ParseBareItem(data).Unwrap());
+            var result = Rfc8941Parser.ParseBareItem(data).Unwrap();
+            if (result is ReadOnlyMemory<byte> bytes)
+            {
+                result = Convert.ToBase64String(bytes.ToArray());
+            }
+
+            Assert.Equal(value, result);
         }
 
         [Theory]
@@ -137,6 +145,25 @@ namespace StructuredFieldValues.Tests
         public void ParseTokenFailsCorrectly(string data)
         {
             Assert.Throws<FormatException>(() => Rfc8941Parser.ParseToken(data).Unwrap());
+        }
+
+        [Theory]
+        [InlineData("::", "")]
+        [InlineData(":YWpyOTgyMzd5czdyZXkzd3I=:", "YWpyOTgyMzd5czdyZXkzd3I=")]
+        public void ParseByteSequenceWorks(string data, string value)
+        {
+            Assert.Equal(value, Convert.ToBase64String(Rfc8941Parser.ParseByteSequence(data).Unwrap().ToArray()));
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(":")]
+        [InlineData(" :")]
+        [InlineData("Aaaa")]
+        [InlineData(":!:")]
+        public void ParseByteSequenceFailsCorrectly(string data)
+        {
+            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseByteSequence(data).Unwrap());
         }
     }
 }

@@ -37,6 +37,9 @@ namespace StructuredFieldValues
                 case '*':
                     return ParseToken(source, index).Box();
 
+                case ':':
+                    return ParseByteSequence(source, index).Box();
+
                 case '?':
                     return ParseBoolean(source, index).Box();
 
@@ -320,6 +323,53 @@ namespace StructuredFieldValues
             return new(result);
         }
 
+        public static ParseResult<ReadOnlyMemory<byte>> ParseByteSequence(ReadOnlySpan<char> source, int index = 0)
+        {
+            CheckIndex(index);
+            var spanLength = source.Length;
+            if (spanLength - index < 2)
+            {
+                return new(index, "insufficient characters for byte sequence");
+            }
+
+            if (source[index] != ':')
+            {
+                return new(index, "invalid opening byte sequence character");
+            }
+
+            var initialIndex = ++index;
+            var slice = source.Slice(initialIndex);
+            var length = slice.IndexOf(':');
+            if (length < 0)
+            {
+                return new(index, "missing closing byte sequence character");
+            }
+
+            ReadOnlyMemory<byte> result;
+#if NET5_0_OR_GREATER
+            var expectedLength = length * 3 / 4;
+            var buffer = new byte[expectedLength];
+            if (!Convert.TryFromBase64Chars(slice.Slice(0, length), buffer, out var written))
+            {
+                return new(index, "invalid byte sequence encoding");
+            }
+
+            result = buffer.AsMemory(0, written);
+#else
+            try
+            {
+                result = Convert.FromBase64CharArray(slice.Slice(0, length).ToArray(), 0, length);
+            }
+            catch (FormatException)
+            {
+                return new(index, "invalid byte sequence encoding");
+            }
+#endif
+
+            index = length + 1;
+            return new(result);
+        }
+
 #if !NET5_0_OR_GREATER
         public static ParseResult<object> ParseBareItem(string source) => ParseBareItem(source.AsSpan());
 
@@ -330,6 +380,8 @@ namespace StructuredFieldValues
         public static ParseResult<string> ParseString(string source) => ParseString(source.AsSpan());
 
         public static ParseResult<string> ParseToken(string source) => ParseToken(source.AsSpan());
+
+        public static ParseResult<ReadOnlyMemory<byte>> ParseByteSequence(string source) => ParseByteSequence(source.AsSpan());
 #endif
 
         private static int SkipSP(ReadOnlySpan<char> source, int index)
