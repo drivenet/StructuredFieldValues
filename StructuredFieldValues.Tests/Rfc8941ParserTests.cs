@@ -7,44 +7,56 @@ namespace StructuredFieldValues.Tests
     public class Rfc8941ParserTests
     {
         [Theory]
-        [InlineData("?0", false)]
-        [InlineData("?1", true)]
-        [InlineData("?092379f&((*&3", false)]
-        [InlineData("?1dmfsldjf*2834y392", true)]
-        [InlineData("0", 0.0)]
-        [InlineData("1", 1.0)]
-        [InlineData("-17", -17.0)]
-        [InlineData("2873913q123", 2873913.0)]
-        [InlineData("1zxcc", 1.0)]
-        [InlineData("-913vwe", -913.0)]
-        [InlineData("1239712839", 1239712839.0)]
-        [InlineData("1328409328402340", 1328409328402340.0)]
-        [InlineData("484944311926.6", 484944311926.6)]
-        [InlineData("472389478934.123", 472389478934.123)]
-        [InlineData("987654321098765", 987654321098765.0)]
-        [InlineData("\"\"", "")]
-        [InlineData("\"!\"", "!")]
-        [InlineData("\"abc def\"", "abc def")]
-        [InlineData("\"d34234efghi\"qwjeoiwqe", "d34234efghi")]
-        [InlineData("\"abc\\\\ def\"", "abc\\ def")]
-        [InlineData("\"quotes \\\"72893d\\\" wejp18 \"", "quotes \"72893d\" wejp18 ")]
-        [InlineData("TOK3N", "TOK3N")]
-        [InlineData("*Test-Token.", "*Test-Token.")]
-        [InlineData("TestT0ken\tWithTabs", "TestT0ken")]
-        [InlineData("*!#$%^&+-.~'`^_|~", "*!#$%^&+-.~'`^_|~")]
-        [InlineData("*!@#$%^&+-.~'`^_|~", "*!")]
-        [InlineData("*!#$%^&+-.~'`^_@|~", "*!#$%^&+-.~'`^_")]
-        [InlineData("::", "")]
-        [InlineData(":YWpyOTgyMzd5czdyZXkzd3I=:", "YWpyOTgyMzd5czdyZXkzd3I=")]
-        public void ParseBareItemWorks(string data, object value)
+        [InlineData("?0", 0, false, 2)]
+        [InlineData("?1", 0, true, 2)]
+        [InlineData("?092379f&((*&3", 0, false, 2)]
+        [InlineData("?1dmfsldjf*2834y392", 0, true, 2)]
+        [InlineData("?1?0some", 2, false, 4)]
+        [InlineData("?0?1some", 2, true, 4)]
+        [InlineData("?1?092379f&((*&3", 2, false, 4)]
+        [InlineData("?0?1dmfsldjf*2834y392", 2, true, 4)]
+        [InlineData("some?0!", 4, false, 6)]
+        [InlineData("some?1!", 4, true, 6)]
+        [InlineData("0", 0, 0.0, 1)]
+        [InlineData("1", 0, 1.0, 1)]
+        [InlineData("-17", 0, -17.0, 3)]
+        [InlineData("2873913q123", 0, 2873913.0, 7)]
+        [InlineData("q1232873913", 4, 2873913.0, 11)]
+        [InlineData("1zxcc", 0, 1.0, 1)]
+        [InlineData("-913vwe", 0, -913.0, 4)]
+        [InlineData("1239712839", 0, 1239712839.0, 10)]
+        [InlineData("1328409328402340", 0, 1328409328402340.0, 16)]
+        [InlineData("484944311926.6", 0, 484944311926.6, 14)]
+        [InlineData("472389478934.123", 0, 472389478934.123, 16)]
+        [InlineData("987654321098765", 0, 987654321098765.0, 15)]
+        [InlineData("\"\"", 0, "", 2)]
+        [InlineData("\"!\"", 0, "!", 3)]
+        [InlineData("\"abc def\"", 0, "abc def", 9)]
+        [InlineData("\"r0x\"abc def\"", 4, "abc def", 13)]
+        [InlineData("\"d34234efghi\"qwjeoiwqe", 0, "d34234efghi", 13)]
+        [InlineData("\"abc\\\\ def\"", 0, "abc\\ def", 11)]
+        [InlineData("\"quotes \\\"72893d\\\" wejp18 \"", 0, "quotes \"72893d\" wejp18 ", 27)]
+        [InlineData("qwieu189xHH\"d34234ghi\"qwjiwqe", 11, "d34234ghi", 22)]
+        [InlineData("TOK3N", 0, "TOK3N", 5)]
+        [InlineData("*Test-Token.", 0, "*Test-Token.", 12)]
+        [InlineData("TestT0ken\tWithTabs", 0, "TestT0ken", 9)]
+        [InlineData("*!#$%^&+-.~'`^_|~", 0, "*!#$%^&+-.~'`^_|~", 17)]
+        [InlineData("*!@#$%^&+-.~'`^_|~", 0, "*!", 2)]
+        [InlineData("*!#$%^&+-.~'`^_@|~", 0, "*!#$%^&+-.~'`^_", 15)]
+        [InlineData("::2u3y7", 0, "", 2)]
+        [InlineData(":YWpyOTgyMzd5czdyZXkzd3I=:", 0, "YWpyOTgyMzd5czdyZXkzd3I=", 26)]
+        [InlineData("xdo721::", 6, "", 8)]
+        [InlineData("xc,o2!7:XiZocTI4KiZoZlxo:", 7, "XiZocTI4KiZoZlxo", 25)]
+        public void ParseBareItemWorks(string data, int index, object value, int lastIndex)
         {
-            var result = Rfc8941Parser.ParseBareItem(data).Unwrap();
+            var result = Rfc8941Parser.ParseBareItem(data, ref index).Unwrap();
             if (result is ReadOnlyMemory<byte> bytes)
             {
                 result = Convert.ToBase64String(bytes.ToArray());
             }
 
             Assert.Equal(value, result);
+            Assert.Equal(lastIndex, index);
         }
 
         [Theory]

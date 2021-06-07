@@ -6,7 +6,7 @@ namespace StructuredFieldValues
 {
     public static class Rfc8941Parser
     {
-        public static ParseResult<object> ParseBareItem(ReadOnlySpan<char> source, int index = 0)
+        public static ParseResult<object> ParseBareItem(ReadOnlySpan<char> source, ref int index)
         {
             index = SkipSP(source, index);
 
