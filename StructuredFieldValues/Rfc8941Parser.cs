@@ -108,12 +108,12 @@ namespace StructuredFieldValues
 
             var separatorIndex = -1;
             var initialIndex = index;
-
-            while (index < spanLength)
+            var localIndex = initialIndex;
+            while (localIndex < spanLength)
             {
-                var character = source[index];
+                var character = source[localIndex];
                 var earlyBreak = false;
-                var length = index - initialIndex;
+                var length = localIndex - initialIndex;
                 switch (character)
                 {
                     case '0':
@@ -131,15 +131,17 @@ namespace StructuredFieldValues
                     case '.':
                         if (separatorIndex >= 0)
                         {
+                            index = localIndex;
                             return new(initialIndex, "misplaced decimal '.'");
                         }
 
                         if (length > 12)
                         {
-                            return new(index, "integral part of decimal is too long", character);
+                            index = localIndex;
+                            return new(localIndex, "integral part of decimal is too long", character);
                         }
 
-                        separatorIndex = index;
+                        separatorIndex = localIndex;
                         break;
 
                     default:
@@ -156,26 +158,30 @@ namespace StructuredFieldValues
                 {
                     if (length > 15)
                     {
-                        return new(index, "integer is too long ({0})", length);
+                        index = localIndex;
+                        return new(localIndex, "integer is too long ({0})", length);
                     }
                 }
                 else
                 {
                     if (length > 16)
                     {
-                        return new(index, "decimal is too long ({0})", length);
+                        index = localIndex;
+                        return new(localIndex, "decimal is too long ({0})", length);
                     }
 
-                    var fractionLength = index - separatorIndex;
+                    var fractionLength = localIndex - separatorIndex;
                     if (fractionLength > 3)
                     {
+                        index = localIndex;
                         return new(initialIndex, "decimal fraction is too long ({0})", fractionLength);
                     }
                 }
 
-                ++index;
+                ++localIndex;
             }
 
+            index = localIndex;
             if (index == initialIndex)
             {
                 return new(index, "insufficient digits for number");
@@ -185,7 +191,7 @@ namespace StructuredFieldValues
             if (separatorIndex < 0)
             {
                 var parsed = 0L;
-                for (var i = initialIndex; i < index; i++)
+                for (var i = initialIndex; i < localIndex; i++)
                 {
                     parsed *= 10;
                     parsed += source[i] - '0';
@@ -237,21 +243,22 @@ namespace StructuredFieldValues
             }
 
             var initialIndex = index;
-
+            var localIndex = initialIndex;
             StringBuilder? buffer = null;
-            while (index < spanLength)
+            while (localIndex < spanLength)
             {
-                var character = source[index];
+                var character = source[localIndex];
                 switch (character)
                 {
                     case '\\':
-                        ++index;
-                        if (index >= spanLength)
+                        ++localIndex;
+                        if (localIndex >= spanLength)
                         {
-                            return new(index, "missing escaped character");
+                            index = localIndex;
+                            return new(localIndex, "missing escaped character");
                         }
 
-                        character = source[index];
+                        character = source[localIndex];
                         switch (character)
                         {
                             case '\\':
@@ -259,7 +266,7 @@ namespace StructuredFieldValues
                                 if (buffer is null)
                                 {
                                     buffer = new StringBuilder(spanLength - 2);
-                                    var slice = source.Slice(initialIndex, index - initialIndex - 1);
+                                    var slice = source.Slice(initialIndex, localIndex - initialIndex - 1);
 #if NET5_0_OR_GREATER
                                     buffer.Append(slice);
 #else
@@ -271,7 +278,8 @@ namespace StructuredFieldValues
                                 break;
 
                             default:
-                                return new(index, "invalid escaped character");
+                                index = localIndex;
+                                return new(localIndex, "invalid escaped character");
                         }
 
                         break;
@@ -284,7 +292,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            var slice = source.Slice(initialIndex, index - initialIndex);
+                            var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
                             result = new string(slice);
 #else
@@ -292,23 +300,25 @@ namespace StructuredFieldValues
 #endif
                         }
 
-                        ++index;
+                        index = localIndex + 1;
                         return new(result);
 
                     default:
                         if (character is < (char)0x1F or > (char)0x7F)
                         {
-                            return new(index, "string character is out of range");
+                            index = localIndex;
+                            return new(localIndex, "string character is out of range");
                         }
 
                         buffer?.Append(character);
                         break;
                 }
 
-                ++index;
+                ++localIndex;
             }
 
-            return new(index, "missing closing double quote");
+            index = localIndex;
+            return new(localIndex, "missing closing double quote");
         }
 
         public static ParseResult<string> ParseToken(ReadOnlySpan<char> source, ref int index)
@@ -326,25 +336,27 @@ namespace StructuredFieldValues
                 return new(index, "invalid leading token character");
             }
 
-            var initialIndex = index++;
-            while (index < spanLength)
+            var initialIndex = index;
+            var localIndex = ++index;
+            while (localIndex < spanLength)
             {
-                character = source[index];
+                character = source[localIndex];
                 if (character is not ((>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9')
                     or '!' or '#' or '$' or '%' or '&' or '\'' or '*' or '+' or '-' or '.' or '^' or '_' or '`' or '|' or '~'))
                 {
                     break;
                 }
 
-                ++index;
+                ++localIndex;
             }
 
-            var slice = source.Slice(initialIndex, index - initialIndex);
+            var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
             var result = new string(slice);
 #else
             var result = new string(slice.ToArray());
 #endif
+            index = localIndex;
             return new(result);
         }
 
@@ -397,7 +409,7 @@ namespace StructuredFieldValues
         }
 
 #if !NET5_0_OR_GREATER
-        public static ParseResult<object> ParseBareItem(string source) => ParseBareItem(source.AsSpan());
+        public static ParseResult<object> ParseBareItem(string source, ref int index) => ParseBareItem(source.AsSpan(), ref index);
 
         public static ParseResult<bool> ParseBoolean(string source, ref int index) => ParseBoolean(source.AsSpan(), ref index);
 
