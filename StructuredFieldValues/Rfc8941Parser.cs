@@ -54,6 +54,44 @@ namespace StructuredFieldValues
             }
         }
 
+        public static ParseResult<string> ParseKey(ReadOnlySpan<char> source, ref int index)
+        {
+            CheckIndex(index);
+            var spanLength = source.Length;
+            if (spanLength - index < 1)
+            {
+                return new(index, "insufficient characters for key");
+            }
+
+            var character = source[index];
+            if (character is not ((>= 'a' and <= 'z') or '*'))
+            {
+                return new(index, "invalid leading token character");
+            }
+
+            var initialIndex = index;
+            var localIndex = ++index;
+            while (localIndex < spanLength)
+            {
+                character = source[localIndex];
+                if (character is not ((>= 'a' and <= 'z') or (>= '0' and <= '9') or '_' or '-' or '.' or '*'))
+                {
+                    break;
+                }
+
+                ++localIndex;
+            }
+
+            var slice = source.Slice(initialIndex, localIndex - initialIndex);
+#if NET5_0_OR_GREATER
+            var result = new string(slice);
+#else
+            var result = new string(slice.ToArray());
+#endif
+            index = localIndex;
+            return new(result);
+        }
+
         public static ParseResult<bool> ParseBoolean(ReadOnlySpan<char> source, ref int index)
         {
             CheckIndex(index);
@@ -410,6 +448,8 @@ namespace StructuredFieldValues
 
 #if !NET5_0_OR_GREATER
         public static ParseResult<object> ParseBareItem(string source, ref int index) => ParseBareItem(source.AsSpan(), ref index);
+
+        public static ParseResult<string> ParseKey(string source, ref int index) => ParseKey(source.AsSpan(), ref index);
 
         public static ParseResult<bool> ParseBoolean(string source, ref int index) => ParseBoolean(source.AsSpan(), ref index);
 
