@@ -37,11 +37,11 @@ namespace StructuredFieldValues.Tests
         [InlineData("\"abc\\\\ def\"", 0, "abc\\ def", 11)]
         [InlineData("\"quotes \\\"72893d\\\" wejp18 \"", 0, "quotes \"72893d\" wejp18 ", 27)]
         [InlineData("qwieu189xHH\"d34234ghi\"qwjiwqe", 11, "d34234ghi", 22)]
-        [InlineData("TOK3N", 0, "TOK3N", 5)]
+        [InlineData("TOK/417", 0, "TOK/417", 7)]
         [InlineData("*Test-Token.", 0, "*Test-Token.", 12)]
-        [InlineData("TestT0ken\tWithTabs", 0, "TestT0ken", 9)]
-        [InlineData("*!#$%^&+-.~'`^_|~", 0, "*!#$%^&+-.~'`^_|~", 17)]
-        [InlineData("*!@#$%^&+-.~'`^_|~", 0, "*!", 2)]
+        [InlineData("Test:T0ken\tWithTabs", 0, "Test:T0ken", 10)]
+        [InlineData("*!#$%^&:+-./~'`^_|~", 0, "*!#$%^&:+-./~'`^_|~", 19)]
+        [InlineData("*!@#$/:%^&+-.~'`^_|~", 0, "*!", 2)]
         [InlineData("*!#$%^&+-.~'`^_@|~", 0, "*!#$%^&+-.~'`^_", 15)]
         [InlineData("::2u3y7", 0, "", 2)]
         [InlineData(":YWpyOTgyMzd5czdyZXkzd3I=:", 0, "YWpyOTgyMzd5czdyZXkzd3I=", 26)]
@@ -158,11 +158,11 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
-        [InlineData("TOK3N", 0, "TOK3N", 5)]
+        [InlineData("TOK/417", 0, "TOK/417", 7)]
         [InlineData("*Test-Token.", 0, "*Test-Token.", 12)]
-        [InlineData("TestT0ken\tWithTabs", 0, "TestT0ken", 9)]
-        [InlineData("*!#$%^&+-.~'`^_|~", 0, "*!#$%^&+-.~'`^_|~", 17)]
-        [InlineData("*!@#$%^&+-.~'`^_|~", 0, "*!", 2)]
+        [InlineData("Test:T0ken\tWithTabs", 0, "Test:T0ken", 10)]
+        [InlineData("*!#$%^&:+-./~'`^_|~", 0, "*!#$%^&:+-./~'`^_|~", 19)]
+        [InlineData("*!@#$/:%^&+-.~'`^_|~", 0, "*!", 2)]
         [InlineData("*!#$%^&+-.~'`^_@|~", 0, "*!#$%^&+-.~'`^_", 15)]
         public void ParseTokenWorks(string data, int index, string value, int lastIndex)
         {
