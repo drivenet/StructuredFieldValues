@@ -437,7 +437,7 @@ namespace StructuredFieldValues
         {
             if (index < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), "Negative boolean index.");
+                throw new ArgumentOutOfRangeException(nameof(index), "Negative index.");
             }
         }
     }
