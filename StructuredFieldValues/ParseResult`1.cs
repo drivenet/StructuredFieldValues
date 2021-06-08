@@ -4,7 +4,7 @@ using System.Globalization;
 namespace StructuredFieldValues
 {
 #pragma warning disable CA1815 // Override equals and operator equals on value types -- not needed here
-    public readonly partial struct ParseResult<TResult>
+    public readonly struct ParseResult<TResult>
 #pragma warning restore CA1815 // Override equals and operator equals on value types
         where TResult : notnull
     {
