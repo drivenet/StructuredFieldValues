@@ -6,12 +6,15 @@ namespace StructuredFieldValues
 {
     public static class Rfc8941Parser
     {
-        public static ParseResult<object> ParseBareItem(ReadOnlySpan<char> source, ref int index)
+        private static readonly object EmptyItem = new object();
+
+        public static ParseError? ParseBareItem(ReadOnlySpan<char> source, ref int index, out object result)
         {
             index = SkipSP(source, index);
 
             if (index == source.Length)
             {
+                result = EmptyItem;
                 return new(index, "empty bare item");
             }
 
@@ -29,43 +32,112 @@ namespace StructuredFieldValues
                 case '7':
                 case '8':
                 case '9':
-                    return ParseNumber(source, ref index).Box();
-
-                case '"':
-                    return ParseString(source, ref index).Box();
-
-                case '*':
-                    return ParseToken(source, ref index).Box();
-
-                case ':':
-                    return ParseByteSequence(source, ref index).Box();
-
-                case '?':
-                    return ParseBoolean(source, ref index).Box();
-
-                default:
-                    // Rare case for Tokens, placing all these cases in switch would be inconvenient
-                    if (discriminator is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z'))
                     {
-                        return ParseToken(source, ref index).Box();
+                        if (ParseNumber(source, ref index, out var parsed) is not { } error)
+                        {
+                            result = parsed;
+                            return null;
+                        }
+                        else
+                        {
+                            result = EmptyItem;
+                            return error;
+                        }
                     }
 
-                    return new(index, "invalid discriminator");
+                case '"':
+                    {
+                        if (ParseString(source, ref index, out var parsed) is not { } error)
+                        {
+                            result = parsed;
+                            return null;
+                        }
+                        else
+                        {
+                            result = EmptyItem;
+                            return error;
+                        }
+                    }
+
+                case '*':
+                    {
+                        if (ParseToken(source, ref index, out var parsed) is not { } error)
+                        {
+                            result = parsed;
+                            return null;
+                        }
+                        else
+                        {
+                            result = EmptyItem;
+                            return error;
+                        }
+                    }
+
+                case ':':
+                    {
+                        if (ParseByteSequence(source, ref index, out var parsed) is not { } error)
+                        {
+                            result = parsed;
+                            return null;
+                        }
+                        else
+                        {
+                            result = EmptyItem;
+                            return error;
+                        }
+                    }
+
+                case '?':
+                    {
+                        if (ParseBoolean(source, ref index, out var parsed) is not { } error)
+                        {
+                            result = parsed;
+                            return null;
+                        }
+                        else
+                        {
+                            result = EmptyItem;
+                            return error;
+                        }
+                    }
+
+                default:
+                    {
+                        // Rare case for Tokens, placing all these cases in switch would be inconvenient
+                        if (discriminator is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z'))
+                        {
+                            if (ParseToken(source, ref index, out var parsed) is not { } error)
+                            {
+                                result = parsed;
+                                return null;
+                            }
+                            else
+                            {
+                                result = EmptyItem;
+                                return error;
+                            }
+                        }
+
+                        result = EmptyItem;
+                        return new(index, "invalid discriminator");
+                    }
             }
         }
 
-        public static ParseResult<string> ParseKey(ReadOnlySpan<char> source, ref int index)
+        public static ParseError? ParseKey(ReadOnlySpan<char> source, ref int index, out string result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 1)
             {
+                result = "";
                 return new(index, "insufficient characters for key");
             }
 
             var character = source[index];
             if (character is not ((>= 'a' and <= 'z') or '*'))
             {
+                result = "";
                 return new(index, "invalid leading token character");
             }
 
@@ -84,32 +156,35 @@ namespace StructuredFieldValues
 
             var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
-            var result = new string(slice);
+            result = new string(slice);
 #else
-            var result = new string(slice.ToArray());
+            result = new string(slice.ToArray());
 #endif
             index = localIndex;
-            return new(result);
+            return null;
         }
 
-        public static ParseResult<bool> ParseBoolean(ReadOnlySpan<char> source, ref int index)
+        public static ParseError? ParseBoolean(ReadOnlySpan<char> source, ref int index, out bool result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 1)
             {
+                result = default;
                 return new(index, "insufficient characters for boolean");
             }
 
             var discriminator = source[index];
             if (discriminator != '?')
             {
+                result = default;
                 return new(index, "unexpected boolean discriminator");
             }
 
             ++index;
             if (spanLength - index < 1)
             {
+                result = default;
                 return new(index, "insufficient characters for boolean value");
             }
 
@@ -118,23 +193,27 @@ namespace StructuredFieldValues
             {
                 case '0':
                     ++index;
-                    return new(false);
+                    result = false;
+                    return null;
 
                 case '1':
                     ++index;
-                    return new(true);
+                    result = true;
+                    return null;
 
                 default:
+                    result = default;
                     return new(index, "unexpected boolean value");
-            };
+            }
         }
 
-        public static ParseResult<double> ParseNumber(ReadOnlySpan<char> source, ref int index)
+        public static ParseError? ParseNumber(ReadOnlySpan<char> source, ref int index, out double result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 1)
             {
+                result = default;
                 return new(index, "insufficient characters for number");
             }
 
@@ -170,12 +249,14 @@ namespace StructuredFieldValues
                         if (separatorIndex >= 0)
                         {
                             index = localIndex;
+                            result = default;
                             return new(initialIndex, "misplaced decimal '.'");
                         }
 
                         if (length > 12)
                         {
                             index = localIndex;
+                            result = default;
                             return new(localIndex, "integral part of decimal is too long", character);
                         }
 
@@ -197,6 +278,7 @@ namespace StructuredFieldValues
                     if (length > 15)
                     {
                         index = localIndex;
+                        result = default;
                         return new(localIndex, "integer is too long ({0})", length);
                     }
                 }
@@ -205,6 +287,7 @@ namespace StructuredFieldValues
                     if (length > 16)
                     {
                         index = localIndex;
+                        result = default;
                         return new(localIndex, "decimal is too long ({0})", length);
                     }
 
@@ -212,6 +295,7 @@ namespace StructuredFieldValues
                     if (fractionLength > 3)
                     {
                         index = localIndex;
+                        result = default;
                         return new(initialIndex, "decimal fraction is too long ({0})", fractionLength);
                     }
                 }
@@ -222,6 +306,7 @@ namespace StructuredFieldValues
             index = localIndex;
             if (index == initialIndex)
             {
+                result = default;
                 return new(index, "insufficient digits for number");
             }
 
@@ -247,6 +332,7 @@ namespace StructuredFieldValues
                 if (!double.TryParse(valueString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value))
 #endif
                 {
+                    result = default;
                     return new(initialIndex, "failed to parse decimal");
                 }
             }
@@ -256,20 +342,23 @@ namespace StructuredFieldValues
                 value = -value;
             }
 
-            return new(value);
+            result = value;
+            return null;
         }
 
-        public static ParseResult<string> ParseString(ReadOnlySpan<char> source, ref int index)
+        public static ParseError? ParseString(ReadOnlySpan<char> source, ref int index, out string result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 1)
             {
+                result = "";
                 return new(index, "insufficient characters for string");
             }
 
             if (source[index] != '"')
             {
+                result = "";
                 return new(index, "missing opening double quote");
             }
 
@@ -277,6 +366,7 @@ namespace StructuredFieldValues
 
             if (spanLength - index < 1)
             {
+                result = "";
                 return new(index, "insufficient characters for string value");
             }
 
@@ -293,6 +383,7 @@ namespace StructuredFieldValues
                         if (localIndex >= spanLength)
                         {
                             index = localIndex;
+                            result = "";
                             return new(localIndex, "missing escaped character");
                         }
 
@@ -317,13 +408,13 @@ namespace StructuredFieldValues
 
                             default:
                                 index = localIndex;
+                                result = "";
                                 return new(localIndex, "invalid escaped character");
                         }
 
                         break;
 
                     case '"':
-                        string result;
                         if (buffer is object)
                         {
                             result = buffer.ToString();
@@ -339,12 +430,13 @@ namespace StructuredFieldValues
                         }
 
                         index = localIndex + 1;
-                        return new(result);
+                        return null;
 
                     default:
                         if (character is < (char)0x1F or > (char)0x7F)
                         {
                             index = localIndex;
+                            result = "";
                             return new(localIndex, "string character is out of range");
                         }
 
@@ -356,21 +448,24 @@ namespace StructuredFieldValues
             }
 
             index = localIndex;
+            result = "";
             return new(localIndex, "missing closing double quote");
         }
 
-        public static ParseResult<string> ParseToken(ReadOnlySpan<char> source, ref int index)
+        public static ParseError? ParseToken(ReadOnlySpan<char> source, ref int index, out string result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 1)
             {
+                result = "";
                 return new(index, "insufficient characters for token");
             }
 
             var character = source[index];
             if (character is not ((>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '*'))
             {
+                result = "";
                 return new(index, "invalid leading token character");
             }
 
@@ -390,25 +485,27 @@ namespace StructuredFieldValues
 
             var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
-            var result = new string(slice);
+            result = new string(slice);
 #else
-            var result = new string(slice.ToArray());
+            result = new string(slice.ToArray());
 #endif
             index = localIndex;
-            return new(result);
+            return null;
         }
 
-        public static ParseResult<ReadOnlyMemory<byte>> ParseByteSequence(ReadOnlySpan<char> source, ref int index)
+        public static ParseError? ParseByteSequence(ReadOnlySpan<char> source, ref int index, out ReadOnlyMemory<byte> result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 2)
             {
+                result = Array.Empty<byte>();
                 return new(index, "insufficient characters for byte sequence");
             }
 
             if (source[index] != ':')
             {
+                result = Array.Empty<byte>();
                 return new(index, "invalid opening byte sequence character");
             }
 
@@ -418,15 +515,16 @@ namespace StructuredFieldValues
             if (length < 0)
             {
                 index += spanLength - 1;
+                result = Array.Empty<byte>();
                 return new(index, "missing closing byte sequence character");
             }
 
-            ReadOnlyMemory<byte> result;
 #if NET5_0_OR_GREATER
             var expectedLength = length * 3 / 4;
             var buffer = new byte[expectedLength];
             if (!Convert.TryFromBase64Chars(slice.Slice(0, length), buffer, out var written))
             {
+                result = Array.Empty<byte>();
                 return new(index, "invalid byte sequence encoding");
             }
 
@@ -438,28 +536,29 @@ namespace StructuredFieldValues
             }
             catch (FormatException)
             {
+                result = Array.Empty<byte>();
                 return new(index, "invalid byte sequence encoding");
             }
 #endif
 
             index += length + 1;
-            return new(result);
+            return null;
         }
 
 #if !NET5_0_OR_GREATER
-        public static ParseResult<object> ParseBareItem(string source, ref int index) => ParseBareItem(source.AsSpan(), ref index);
+        public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
 
-        public static ParseResult<string> ParseKey(string source, ref int index) => ParseKey(source.AsSpan(), ref index);
+        public static ParseError? ParseKey(string source, ref int index, out string result) => ParseKey(source.AsSpan(), ref index, out result);
 
-        public static ParseResult<bool> ParseBoolean(string source, ref int index) => ParseBoolean(source.AsSpan(), ref index);
+        public static ParseError? ParseBoolean(string source, ref int index, out bool result) => ParseBoolean(source.AsSpan(), ref index, out result);
 
-        public static ParseResult<double> ParseNumber(string source, ref int index) => ParseNumber(source.AsSpan(), ref index);
+        public static ParseError? ParseNumber(string source, ref int index, out double result) => ParseNumber(source.AsSpan(), ref index, out result);
 
-        public static ParseResult<string> ParseString(string source, ref int index) => ParseString(source.AsSpan(), ref index);
+        public static ParseError? ParseString(string source, ref int index, out string result) => ParseString(source.AsSpan(), ref index, out result);
 
-        public static ParseResult<string> ParseToken(string source, ref int index) => ParseToken(source.AsSpan(), ref index);
+        public static ParseError? ParseToken(string source, ref int index, out string result) => ParseToken(source.AsSpan(), ref index, out result);
 
-        public static ParseResult<ReadOnlyMemory<byte>> ParseByteSequence(string source, ref int index) => ParseByteSequence(source.AsSpan(), ref index);
+        public static ParseError? ParseByteSequence(string source, ref int index, out ReadOnlyMemory<byte> result) => ParseByteSequence(source.AsSpan(), ref index, out result);
 #endif
 
         private static int SkipSP(ReadOnlySpan<char> source, int index)

@@ -49,7 +49,7 @@ namespace StructuredFieldValues.Tests
         [InlineData("xc,o2!7:XiZocTI4KiZoZlxo:", 7, "XiZocTI4KiZoZlxo", 25)]
         public void ParseBareItemWorks(string data, int index, object value, int lastIndex)
         {
-            var result = Rfc8941Parser.ParseBareItem(data, ref index).Unwrap();
+            Assert.Null(Rfc8941Parser.ParseBareItem(data, ref index, out var result));
             if (result is ReadOnlyMemory<byte> bytes)
             {
                 result = Convert.ToBase64String(bytes.ToArray());
@@ -72,7 +72,8 @@ namespace StructuredFieldValues.Tests
         [InlineData("some?1!", 4, true, 6)]
         public void ParseBooleanWorks(string data, int index, bool value, int lastIndex)
         {
-            Assert.Equal(value, Rfc8941Parser.ParseBoolean(data, ref index).Unwrap());
+            Assert.Null(Rfc8941Parser.ParseBoolean(data, ref index, out var result));
+            Assert.Equal(value, result);
             Assert.Equal(lastIndex, index);
         }
 
@@ -86,7 +87,7 @@ namespace StructuredFieldValues.Tests
         [InlineData("?0dc!", 2, 2)]
         public void ParseBooleanFailsCorrectly(string data, int index, int lastIndex)
         {
-            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseBoolean(data, ref index).Unwrap());
+            Assert.NotNull(Rfc8941Parser.ParseBoolean(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
 
@@ -105,7 +106,8 @@ namespace StructuredFieldValues.Tests
         [InlineData("987654321098765", 0, 987654321098765.0, 15)]
         public void ParseNumberWorks(string data, int index, double value, int lastIndex)
         {
-            Assert.Equal(value, Rfc8941Parser.ParseNumber(data, ref index).Unwrap());
+            Assert.Null(Rfc8941Parser.ParseNumber(data, ref index, out var result));
+            Assert.Equal(value, result);
             Assert.Equal(lastIndex, index);
         }
 
@@ -121,10 +123,10 @@ namespace StructuredFieldValues.Tests
         [InlineData("9876543210number", 10, 10)]
         public void ParseNumberFailsCorrectly(string data, int index, int lastIndex)
         {
-            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseNumber(data, ref index).Unwrap());
+            Assert.NotNull(Rfc8941Parser.ParseNumber(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
-
+        
         [Theory]
         [InlineData("\"\"", 0, "", 2)]
         [InlineData("\"!\"", 0, "!", 3)]
@@ -136,7 +138,8 @@ namespace StructuredFieldValues.Tests
         [InlineData("qwieu189xHH\"d34234ghi\"qwjiwqe", 11, "d34234ghi", 22)]
         public void ParseStringWorks(string data, int index, string value, int lastIndex)
         {
-            Assert.Equal(value, Rfc8941Parser.ParseString(data, ref index).Unwrap());
+            Assert.Null(Rfc8941Parser.ParseString(data, ref index, out var result));
+            Assert.Equal(value, result);
             Assert.Equal(lastIndex, index);
         }
 
@@ -153,7 +156,7 @@ namespace StructuredFieldValues.Tests
         [InlineData("\"escaping \\", 0, 11)]
         public void ParseStringFailsCorrectly(string data, int index, int lastIndex)
         {
-            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseString(data, ref index).Unwrap());
+            Assert.NotNull(Rfc8941Parser.ParseString(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
 
@@ -166,7 +169,8 @@ namespace StructuredFieldValues.Tests
         [InlineData("*!#$%^&+-.~'`^_@|~", 0, "*!#$%^&+-.~'`^_", 15)]
         public void ParseTokenWorks(string data, int index, string value, int lastIndex)
         {
-            Assert.Equal(value, Rfc8941Parser.ParseToken(data, ref index).Unwrap());
+            Assert.Null(Rfc8941Parser.ParseToken(data, ref index, out var result));
+            Assert.Equal(value, result);
             Assert.Equal(lastIndex, index);
         }
 
@@ -180,7 +184,7 @@ namespace StructuredFieldValues.Tests
         [InlineData("r!dsX9AFUH162", 5, 5)]
         public void ParseTokenFailsCorrectly(string data, int index, int lastIndex)
         {
-            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseToken(data, ref index).Unwrap());
+            Assert.NotNull(Rfc8941Parser.ParseToken(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
 
@@ -191,7 +195,8 @@ namespace StructuredFieldValues.Tests
         [InlineData("xc,o2!7:XiZocTI4KiZoZlxo:", 7, "XiZocTI4KiZoZlxo", 25)]
         public void ParseByteSequenceWorks(string data, int index, string value, int lastIndex)
         {
-            Assert.Equal(value, Convert.ToBase64String(Rfc8941Parser.ParseByteSequence(data, ref index).Unwrap().ToArray()));
+            Assert.Null(Rfc8941Parser.ParseByteSequence(data, ref index, out var result));
+            Assert.Equal(value, Convert.ToBase64String(result.ToArray()));
             Assert.Equal(lastIndex, index);
         }
 
@@ -204,7 +209,7 @@ namespace StructuredFieldValues.Tests
         [InlineData("addsad:*:", 6, 7)]
         public void ParseByteSequenceFailsCorrectly(string data, int index, int lastIndex)
         {
-            Assert.Throws<FormatException>(() => Rfc8941Parser.ParseByteSequence(data, ref index).Unwrap());
+            Assert.NotNull(Rfc8941Parser.ParseByteSequence(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
     }
