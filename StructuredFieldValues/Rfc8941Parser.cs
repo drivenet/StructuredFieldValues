@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
@@ -7,6 +8,8 @@ namespace StructuredFieldValues
     public static class Rfc8941Parser
     {
         private static readonly object EmptyItem = new object();
+        private static readonly IReadOnlyDictionary<string, object> EmptyParameters = new Dictionary<string, object>();
+        private static readonly object True = true;
 
         public static ParseError? ParseBareItem(ReadOnlySpan<char> source, ref int index, out object result)
         {
@@ -122,6 +125,51 @@ namespace StructuredFieldValues
                         return new(index, "invalid discriminator");
                     }
             }
+        }
+
+        public static ParseError? ParseParameters(ReadOnlySpan<char> source, ref int index, out IReadOnlyDictionary<string, object> result)
+        {
+            CheckIndex(index);
+            Dictionary<string, object>? parameters = null;
+            var spanLength = source.Length;
+            var localIndex = index;
+            while (localIndex < spanLength)
+            {
+                if (source[localIndex] != ';')
+                {
+                    break;
+                }
+
+                localIndex = SkipSP(source, localIndex + 1);
+                if (ParseKey(source, ref localIndex, out var key) is { } keyError)
+                {
+                    index = localIndex;
+                    result = EmptyParameters;
+                    return keyError;
+                }
+
+                object value;
+                if (localIndex < spanLength && source[localIndex] == '=')
+                {
+                    ++localIndex;
+                    if (ParseBareItem(source, ref localIndex, out value) is { } valueError)
+                    {
+                        index = localIndex;
+                        result = EmptyParameters;
+                        return valueError;
+                    }
+                }
+                else
+                {
+                    value = True;
+                }
+
+                (parameters ??= new())[key] = value;
+            }
+
+            index = localIndex;
+            result = parameters ?? EmptyParameters;
+            return null;
         }
 
         public static ParseError? ParseKey(ReadOnlySpan<char> source, ref int index, out string result)
@@ -547,6 +595,8 @@ namespace StructuredFieldValues
 
 #if !NET5_0_OR_GREATER
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
+
+        public static ParseError? ParseParameters(string source, ref int index, out IReadOnlyDictionary<string, object> result) => ParseParameters(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseKey(string source, ref int index, out string result) => ParseKey(source.AsSpan(), ref index, out result);
 

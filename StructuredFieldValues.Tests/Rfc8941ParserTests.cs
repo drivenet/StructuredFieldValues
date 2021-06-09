@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+
+using Newtonsoft.Json;
 
 using Xunit;
 
@@ -239,6 +242,37 @@ namespace StructuredFieldValues.Tests
         public void ParseByteSequenceFailsCorrectly(string data, int index, int lastIndex)
         {
             Assert.NotNull(Rfc8941Parser.ParseByteSequence(data, ref index, out _));
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData("", 0, "{}", 0)]
+        [InlineData(";key", 0, "{key: true}", 4)]
+        [InlineData("qqcxc;  some;value=18.13;   v=\"99\";mm=*test/71 st", 5, "{some: true, value: 18.13, v: '99', mm: '*test/71'}", 46)]
+        public void ParseParametersSequenceWorks(string data, int index, string value, int lastIndex)
+        {
+            var parsedValue = JsonConvert.DeserializeObject<Dictionary<string, object>>(value);
+            Assert.Null(Rfc8941Parser.ParseParameters(data, ref index, out var result));
+            Assert.Equal(parsedValue, result);
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData(";", 0, 1)]
+        [InlineData("some;;*key", 4, 5)]
+        [InlineData(";TEST", 0, 1)]
+        [InlineData("; TEST", 0, 2)]
+        [InlineData(";\"TEST\"", 0, 1)]
+        [InlineData(";!", 0, 1)]
+        [InlineData(";7 Test", 0, 1)]
+        [InlineData("1T;0ken", 2, 3)]
+        [InlineData("1;T0ken", 1, 2)]
+        [InlineData(";1key", 0, 1)]
+        [InlineData("r!dsX;9AFUH162", 5, 6)]
+        [InlineData("qqcxc;  some;value=!18.13;   v=\"99\";mm=*test/71 st", 5, 19)]
+        public void ParseParametersFailsCorrectly(string data, int index, int lastIndex)
+        {
+            Assert.NotNull(Rfc8941Parser.ParseParameters(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
     }
