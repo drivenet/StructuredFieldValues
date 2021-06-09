@@ -176,7 +176,7 @@ namespace StructuredFieldValues.Tests
 
         [Theory]
         [InlineData("", 0, 0)]
-        [InlineData("some*key", 4, 4)]
+        [InlineData("some^key", 4, 4)]
         [InlineData("TEST", 0, 0)]
         [InlineData(" TEST", 0, 0)]
         [InlineData("\"TEST\"", 0, 0)]
