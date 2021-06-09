@@ -13,6 +13,7 @@ namespace StructuredFieldValues
 
         public static ParseError? ParseBareItem(ReadOnlySpan<char> source, ref int index, out object result)
         {
+            CheckIndex(index);
             index = SkipSP(source, index);
 
             if (index == source.Length)
@@ -613,7 +614,6 @@ namespace StructuredFieldValues
 
         private static int SkipSP(ReadOnlySpan<char> source, int index)
         {
-            CheckIndex(index);
             while (index < source.Length && source[index] == ' ')
             {
                 ++index;
