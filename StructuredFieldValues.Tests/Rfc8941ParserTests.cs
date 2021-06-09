@@ -275,5 +275,25 @@ namespace StructuredFieldValues.Tests
             Assert.NotNull(Rfc8941Parser.ParseParameters(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
+
+        [Theory]
+        [InlineData("!!\"Chromium\";v=\"86\", \"\"Not\\A;Brand\";v=\"99\", \"Google Chrome\";v=\"86\"", 2, "Chromium", "{v: '86'}", 19)]
+        public void ParseItemWorks(string data, int index, object item, string parameters, int lastIndex)
+        {
+            var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters);
+            Assert.Null(Rfc8941Parser.ParseItem(data, ref index, out var result));
+            Assert.Equal(item, result.Item);
+            Assert.Equal(parsedParameters, result.Parameters);
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData("", 0, 0)]
+        [InlineData("\"Data\";v=17!", 6, 6)]
+        public void ParseItemFailsCorrectly(string data, int index, int lastIndex)
+        {
+            Assert.NotNull(Rfc8941Parser.ParseItem(data, ref index, out _));
+            Assert.Equal(lastIndex, index);
+        }
     }
 }
