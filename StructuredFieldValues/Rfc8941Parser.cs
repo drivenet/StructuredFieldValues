@@ -128,6 +128,24 @@ namespace StructuredFieldValues
             }
         }
 
+        public static ParseError? ParseItem(ReadOnlySpan<char> source, ref int index, out (object Item, IReadOnlyDictionary<string, object> Parameters) result)
+        {
+            if (ParseBareItem(source, ref index, out var item) is { } itemError)
+            {
+                result = (EmptyItem, EmptyParameters);
+                return itemError;
+            }
+
+            if (ParseParameters(source, ref index, out var parameters) is { } parametersError)
+            {
+                result = (EmptyItem, EmptyParameters);
+                return parametersError;
+            }
+
+            result = (item, parameters);
+            return null;
+        }
+
         public static ParseError? ParseParameters(ReadOnlySpan<char> source, ref int index, out IReadOnlyDictionary<string, object> result)
         {
             CheckIndex(index);
@@ -596,6 +614,8 @@ namespace StructuredFieldValues
 
 #if !NET5_0_OR_GREATER
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
+
+        public static ParseError? ParseItem(string source, ref int index, out (object Item, IReadOnlyDictionary<string, object> Parameters) result) => ParseItem(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseParameters(string source, ref int index, out IReadOnlyDictionary<string, object> result) => ParseParameters(source.AsSpan(), ref index, out result);
 
