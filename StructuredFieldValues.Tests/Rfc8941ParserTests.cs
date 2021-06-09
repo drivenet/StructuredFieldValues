@@ -161,6 +161,35 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
+        [InlineData("key1", 0, "key1", 4)]
+        [InlineData("keyZ1", 0, "key", 3)]
+        [InlineData("TeST*key-super.value*star=0", 4, "*key-super.value*star", 25)]
+        public void ParseKeyWorks(string data, int index, string value, int lastIndex)
+        {
+            Assert.Null(Rfc8941Parser.ParseKey(data, ref index, out var result));
+            Assert.Equal(value, result);
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData("", 0, 0)]
+        [InlineData("some*key", 4, 4)]
+        [InlineData("TEST", 0, 0)]
+        [InlineData(" TEST", 0, 0)]
+        [InlineData("\"TEST\"", 0, 0)]
+        [InlineData("!", 0, 0)]
+        [InlineData("7 Test", 0, 0)]
+        [InlineData("1T0ken", 2, 2)]
+        [InlineData("1T0ken", 1, 1)]
+        [InlineData("1key", 0, 0)]
+        [InlineData("r!dsX9AFUH162", 5, 5)]
+        public void ParseKeyFailsCorrectly(string data, int index, int lastIndex)
+        {
+            Assert.NotNull(Rfc8941Parser.ParseKey(data, ref index, out _));
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
         [InlineData("TOK/417", 0, "TOK/417", 7)]
         [InlineData("*Test-Token.", 0, "*Test-Token.", 12)]
         [InlineData("Test:T0ken\tWithTabs", 0, "Test:T0ken", 10)]
