@@ -249,7 +249,7 @@ namespace StructuredFieldValues.Tests
         [InlineData("", 0, "{}", 0)]
         [InlineData(";key", 0, "{key: true}", 4)]
         [InlineData("qqcxc;  some;value=18.13;   v=\"99\";mm=*test/71 st", 5, "{some: true, value: 18.13, v: '99', mm: '*test/71'}", 46)]
-        public void ParseParametersSequenceWorks(string data, int index, string value, int lastIndex)
+        public void ParseParametersWorks(string data, int index, string value, int lastIndex)
         {
             var parsedValue = JsonConvert.DeserializeObject<Dictionary<string, object>>(value);
             Assert.Null(Rfc8941Parser.ParseParameters(data, ref index, out var result));
