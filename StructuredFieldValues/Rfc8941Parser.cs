@@ -138,7 +138,7 @@ namespace StructuredFieldValues
             if (character is not ((>= 'a' and <= 'z') or '*'))
             {
                 result = "";
-                return new(index, "invalid leading token character");
+                return new(index, "invalid leading key character");
             }
 
             var initialIndex = index;
