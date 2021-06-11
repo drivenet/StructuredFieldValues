@@ -301,11 +301,11 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
-        [InlineData("../../../../httpwg/examples.json")]
+        [InlineData("examples.json")]
         public void WhatWgTestsPass(string fileName)
         {
             JArray items;
-            using (var file = File.OpenText(fileName))
+            using (var file = File.OpenText("../../../../httpwg/" + fileName))
             {
                 using var reader = new JsonTextReader(file);
                 items = (JArray)JToken.ReadFrom(reader);
