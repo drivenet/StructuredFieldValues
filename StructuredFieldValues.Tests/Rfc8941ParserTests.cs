@@ -129,7 +129,7 @@ namespace StructuredFieldValues.Tests
             Assert.NotNull(Rfc8941Parser.ParseNumber(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
-        
+
         [Theory]
         [InlineData("\"\"", 0, "", 2)]
         [InlineData("\"!\"", 0, "!", 3)]
