@@ -39,7 +39,16 @@ namespace StructuredFieldValues
                     {
                         if (ParseNumber(source, ref index, out var parsed) is not { } error)
                         {
-                            result = parsed;
+                            var integer = (long)parsed;
+                            if (parsed == integer)
+                            {
+                                result = integer;
+                            }
+                            else
+                            {
+                                result = parsed;
+                            }
+
                             return null;
                         }
                         else
