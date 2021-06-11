@@ -304,7 +304,6 @@ namespace StructuredFieldValues.Tests
         [InlineData("../../../../httpwg/examples.json")]
         public void WhatWgTestsPass(string fileName)
         {
-            var q = Directory.GetCurrentDirectory();
             JArray items;
             using (var file = File.OpenText(fileName))
             {
