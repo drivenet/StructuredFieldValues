@@ -1,0 +1,3 @@
+[submodule "StructuredFieldValues.Tests/httpwg"]
+	path = StructuredFieldValues.Tests/httpwg
+	url = git@github.com:httpwg/structured-field-tests.git
