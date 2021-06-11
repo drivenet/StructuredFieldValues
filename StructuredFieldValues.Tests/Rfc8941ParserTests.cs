@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using Xunit;
+using Xunit.Sdk;
 
 namespace StructuredFieldValues.Tests
 {
@@ -351,7 +352,14 @@ namespace StructuredFieldValues.Tests
                     var error = Rfc8941Parser.ParseItem(rawItem, ref index, out var parsed);
                     if (mustFail)
                     {
-                        Assert.True(error is object, $"Successful must-fail test \"{name}\" in \"{fileName}\".");
+                        try
+                        {
+                            Assert.NotNull(error);
+                        }
+                        catch (NotNullException exception)
+                        {
+                            throw new TestFailedException($"Successful must-fail test \"{name}\" in \"{fileName}\".", exception);
+                        }
                     }
                     else
                     {
@@ -364,7 +372,14 @@ namespace StructuredFieldValues.Tests
                         }
                         else
                         {
-                            Assert.True(error is null, $"Failing test \"{name}\" in \"{fileName}\":\n{error}");
+                            try
+                            {
+                                Assert.Null(error);
+                            }
+                            catch (NullException exception)
+                            {
+                                throw new TestFailedException($"Failing test \"{name}\" in \"{fileName}\":\n{error}", exception);
+                            }
                         }
                     }
 
@@ -389,8 +404,14 @@ namespace StructuredFieldValues.Tests
                 stringWriter.Flush();
                 var actualString = buffer.ToString();
 
-                //, $"Mismatching test \"{name}\" in \"{fileName}\"."
-                Assert.Equal(expectedString, actualString);
+                try
+                {
+                    Assert.Equal(expectedString, actualString);
+                }
+                catch (EqualException exception)
+                {
+                    throw new TestFailedException($"Mismatching result for test \"{name}\" in \"{fileName}\".", exception);
+                }
             }
         }
     }
