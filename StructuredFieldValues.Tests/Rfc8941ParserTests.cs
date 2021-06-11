@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using Xunit;
 
@@ -294,6 +298,101 @@ namespace StructuredFieldValues.Tests
         {
             Assert.NotNull(Rfc8941Parser.ParseItem(data, ref index, out _));
             Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData("../../../../httpwg/examples.json")]
+        public void WhatWgTestsPass(string fileName)
+        {
+            var q = Directory.GetCurrentDirectory();
+            JArray items;
+            using (var file = File.OpenText(fileName))
+            {
+                using var reader = new JsonTextReader(file);
+                items = (JArray)JToken.ReadFrom(reader);
+            }
+
+            var buffer = new StringBuilder();
+            using var stringWriter = new StringWriter(buffer);
+            foreach (var item in items)
+            {
+                if (item is null)
+                {
+                    continue;
+                }
+
+                var name = item.Value<string>("name") ?? throw new InvalidDataException($"Missing name for test in \"{fileName}\".");
+                var raw = (item.Value<JArray>("raw") ?? throw new InvalidDataException($"Missing raw value for test \"{name}\" in \"{fileName}\"."))
+                    .Select(t => t.Value<string>() ?? throw new InvalidDataException($"Null raw value for test \"{name}\" in \"{fileName}\"."))
+                    .ToList();
+                var headerTypeString = item.Value<string>("header_type") ?? throw new InvalidDataException($"Missing header type for test in \"{fileName}\".");
+                if (!Enum.TryParse<HeaderType>(headerTypeString, true, out var headerType))
+                {
+                    throw new InvalidDataException($"Invalid header type \"{headerTypeString}\" for test \"{name}\" in \"{fileName}\".");
+                }
+
+                var mustFail = item.Value<bool>("must_fail");
+                var expected = item["expected"];
+                if (expected is null && !mustFail)
+                {
+                    throw new InvalidDataException($"Missing expected data for non-failing test \"{name}\" in \"{fileName}\".");
+                }
+
+                var canFail = item.Value<bool>("can_fail");
+
+                var actual = new JArray();
+                foreach (var rawItem in raw)
+                {
+                    if (actual.Count != 0)
+                    {
+                        throw new InvalidDataException($"Unexpected multiple raw data for test \"{name}\" in \"{fileName}\".");
+                    }
+
+                    var index = 0;
+                    var error = Rfc8941Parser.ParseItem(rawItem, ref index, out var parsed);
+                    if (mustFail)
+                    {
+                        Assert.True(error is object, $"Successful must-fail test \"{name}\" in \"{fileName}\".");
+                    }
+                    else
+                    {
+                        if (canFail)
+                        {
+                            if (error is object)
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            Assert.True(error is null, $"Failing test \"{name}\" in \"{fileName}\":\n{error}");
+                        }
+                    }
+
+                    actual = new JArray(parsed.Item, new JArray(parsed.Parameters.Select(p => new JArray(p.Key, p.Value)).ToList()));
+                }
+
+                buffer.Clear();
+                using (var writer = new JsonTextWriter(stringWriter) { CloseOutput = false })
+                {
+                    expected!.WriteTo(writer);
+                }
+
+                stringWriter.Flush();
+                var expectedString = buffer.ToString();
+
+                buffer.Clear();
+                using (var writer = new JsonTextWriter(stringWriter) { CloseOutput = false })
+                {
+                    actual.WriteTo(writer);
+                }
+
+                stringWriter.Flush();
+                var actualString = buffer.ToString();
+
+                //, $"Mismatching test \"{name}\" in \"{fileName}\"."
+                Assert.Equal(expectedString, actualString);
+            }
         }
     }
 }
