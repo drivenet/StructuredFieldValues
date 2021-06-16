@@ -12,19 +12,9 @@ namespace StructuredFieldValues
                 return true;
             }
 
-            if (x is null)
-            {
-                return y is null;
-            }
-            else
-            {
-                if (y is null)
-                {
-                    return false;
-                }
-            }
-
-            if (x.Count != y.Count)
+            if (x is null
+                || y is null
+                || x.Count != y.Count)
             {
                 return false;
             }
