@@ -302,6 +302,31 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
+        [InlineData("!!dx();v=86;q=\"asd\"", 4, "[]", "{v: 86, q: 'asd'}", 19)]
+        [InlineData("(1)", 0, "[{item: 1, parameters: {}}]", "{}", 3)]
+        public void ParseInnerListWorks(string data, int index, string list, string parameters, int lastIndex)
+        {
+            var parsedList = JsonConvert.DeserializeObject<ParsedItem[]>(list)!;
+            var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters)!;
+            Assert.Null(Rfc8941Parser.ParseInnerList(data, ref index, out var result));
+            Assert.Equal(parsedList, result.List);
+            Assert.Equal(parsedParameters, result.Parameters);
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData("", 0, 0)]
+        [InlineData("  ", 1, 1)]
+        [InlineData(" (", 1, 2)]
+        [InlineData("  ( abc", 2, 7)]
+        [InlineData(" ( some", 1, 7)]
+        public void ParseInnerListFailsCorrectly(string data, int index, int lastIndex)
+        {
+            Assert.NotNull(Rfc8941Parser.ParseInnerList(data, ref index, out _));
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
         [InlineData("examples.json")]
         public void WhatWgTestsPass(string fileName)
         {

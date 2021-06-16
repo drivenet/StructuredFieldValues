@@ -7,8 +7,6 @@ namespace StructuredFieldValues
 {
     public static class Rfc8941Parser
     {
-        private static readonly object EmptyItem = new object();
-        private static readonly IReadOnlyDictionary<string, object> EmptyParameters = new Dictionary<string, object>();
         private static readonly object True = true;
 
         public static ParseError? ParseBareItem(ReadOnlySpan<char> source, ref int index, out object result)
@@ -18,7 +16,7 @@ namespace StructuredFieldValues
 
             if (index == source.Length)
             {
-                result = EmptyItem;
+                result = default(ParsedItem).Item;
                 return new(index, "empty bare item");
             }
 
@@ -51,7 +49,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = EmptyItem;
+                            result = CommonValues.EmptyObject;
                             return error;
                         }
                     }
@@ -65,7 +63,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = EmptyItem;
+                            result = CommonValues.EmptyObject;
                             return error;
                         }
                     }
@@ -79,7 +77,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = EmptyItem;
+                            result = CommonValues.EmptyObject;
                             return error;
                         }
                     }
@@ -93,7 +91,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = EmptyItem;
+                            result = CommonValues.EmptyObject;
                             return error;
                         }
                     }
@@ -107,7 +105,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = EmptyItem;
+                            result = CommonValues.EmptyObject;
                             return error;
                         }
                     }
@@ -124,32 +122,92 @@ namespace StructuredFieldValues
                             }
                             else
                             {
-                                result = EmptyItem;
+                                result = CommonValues.EmptyObject;
                                 return error;
                             }
                         }
 
-                        result = EmptyItem;
+                        result = CommonValues.EmptyObject;
                         return new(index, "invalid discriminator");
                     }
             }
         }
 
-        public static ParseError? ParseItem(ReadOnlySpan<char> source, ref int index, out (object Item, IReadOnlyDictionary<string, object> Parameters) result)
+        public static ParseError? ParseInnerList(ReadOnlySpan<char> source, ref int index, out ParsedInnerList result)
+        {
+            CheckIndex(index);
+            var spanLength = source.Length;
+            if (spanLength - index < 1)
+            {
+                result = default;
+                return new(index, "insufficient characters for inner list");
+            }
+
+            if (source[index] != '(')
+            {
+                result = default;
+                return new(index, "missing opening parentheses");
+            }
+
+            ++index;
+
+            if (spanLength - index < 1)
+            {
+                result = default;
+                return new(index, "insufficient characters for inner list value");
+            }
+
+            var initialIndex = index;
+            var localIndex = initialIndex;
+            List<ParsedItem>? buffer = null;
+            while (localIndex < spanLength)
+            {
+                localIndex = SkipSP(source, localIndex);
+                if (source[localIndex] == ')')
+                {
+                    ++localIndex;
+                    if (ParseParameters(source, ref localIndex, out var listParameters) is { } parametersError)
+                    {
+                        index = localIndex;
+                        result = default;
+                        return parametersError;
+                    }
+
+                    index = localIndex;
+                    result = new(buffer, listParameters);
+                    return null;
+                }
+
+                if (ParseItem(source, ref localIndex, out var item) is { } itemError)
+                {
+                    index = localIndex;
+                    result = default;
+                    return itemError;
+                }
+
+                (buffer ??= new()).Add(item);
+            }
+
+            index = localIndex;
+            result = default;
+            return new(localIndex, "missing closing parentheses");
+        }
+
+        public static ParseError? ParseItem(ReadOnlySpan<char> source, ref int index, out ParsedItem result)
         {
             if (ParseBareItem(source, ref index, out var item) is { } itemError)
             {
-                result = (EmptyItem, EmptyParameters);
+                result = default;
                 return itemError;
             }
 
             if (ParseParameters(source, ref index, out var parameters) is { } parametersError)
             {
-                result = (EmptyItem, EmptyParameters);
+                result = default;
                 return parametersError;
             }
 
-            result = (item, parameters);
+            result = new(item, parameters);
             return null;
         }
 
@@ -170,7 +228,7 @@ namespace StructuredFieldValues
                 if (ParseKey(source, ref localIndex, out var key) is { } keyError)
                 {
                     index = localIndex;
-                    result = EmptyParameters;
+                    result = CommonValues.EmptyParameters;
                     return keyError;
                 }
 
@@ -181,7 +239,7 @@ namespace StructuredFieldValues
                     if (ParseBareItem(source, ref localIndex, out value) is { } valueError)
                     {
                         index = localIndex;
-                        result = EmptyParameters;
+                        result = CommonValues.EmptyParameters;
                         return valueError;
                     }
                 }
@@ -194,7 +252,7 @@ namespace StructuredFieldValues
             }
 
             index = localIndex;
-            result = parameters ?? EmptyParameters;
+            result = parameters ?? CommonValues.EmptyParameters;
             return null;
         }
 
@@ -622,7 +680,9 @@ namespace StructuredFieldValues
 #if !NET5_0_OR_GREATER
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
 
-        public static ParseError? ParseItem(string source, ref int index, out (object Item, IReadOnlyDictionary<string, object> Parameters) result) => ParseItem(source.AsSpan(), ref index, out result);
+        public static ParseError? ParseInnerList(string source, ref int index, out ParsedInnerList result) => ParseInnerList(source.AsSpan(), ref index, out result);
+
+        public static ParseError? ParseItem(string source, ref int index, out ParsedItem result) => ParseItem(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseParameters(string source, ref int index, out IReadOnlyDictionary<string, object> result) => ParseParameters(source.AsSpan(), ref index, out result);
 
