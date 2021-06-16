@@ -303,7 +303,7 @@ namespace StructuredFieldValues.Tests
 
         [Theory]
         [InlineData("!!dx();v=86;q=\"asd\"", 4, "[]", "{v: 86, q: 'asd'}", 19)]
-        [InlineData("(1)", 0, "[{item: 1, parameters: {}}]", "{}", 3)]
+        [InlineData("(1;sdd=73.1;q=64 *dedx)", 0, "[{item: 1, parameters: {sdd: 73.1, q: 64}}, {item: '*dedx', parameters: {}}]", "{}", 23)]
         public void ParseInnerListWorks(string data, int index, string list, string parameters, int lastIndex)
         {
             var parsedList = JsonConvert.DeserializeObject<ParsedItem[]>(list)!;
@@ -323,6 +323,41 @@ namespace StructuredFieldValues.Tests
         public void ParseInnerListFailsCorrectly(string data, int index, int lastIndex)
         {
             Assert.NotNull(Rfc8941Parser.ParseInnerList(data, ref index, out _));
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData("!!\"Chromium\";v=\"86\", \"\"Not\\A;Brand\";v=\"99\", \"Google Chrome\";v=\"86\"", 2, "[{item: 'Chromium', parameters: {v: '86'}}]", "{}", 19)]
+        [InlineData("!!dx();v=86;q=\"asd\"", 4, "[]", "{v: 86, q: 'asd'}", 19)]
+        [InlineData("(1;sdd=73.1;q=64 *dedx)", 0, "[{item: 1, parameters: {sdd: 73.1, q: 64}}, {item: '*dedx', parameters: {}}]", "{}", 23)]
+        public void ParseItemOrInnerListWorks(string data, int index, string list, string parameters, int lastIndex)
+        {
+            var parsedList = JsonConvert.DeserializeObject<ParsedItem[]>(list)!;
+            var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters)!;
+            Assert.Null(Rfc8941Parser.ParseItemOrInnerList(data, ref index, out var result));
+            if (result.Item is IReadOnlyList<ParsedItem> { } resultList)
+            {
+                Assert.Equal(parsedList, resultList);
+                Assert.Equal(parsedParameters, result.Parameters);
+            }
+            else
+            {
+                Assert.Equal(Assert.Single(parsedList), result);
+                Assert.Empty(parsedParameters);
+            }
+
+            Assert.Equal(lastIndex, index);
+        }
+
+        [Theory]
+        [InlineData("", 0, 0)]
+        [InlineData("  ", 1, 2)]
+        [InlineData(" (", 1, 2)]
+        [InlineData("  ( abc", 2, 7)]
+        [InlineData(" ( some", 1, 7)]
+        public void ParseItemOrInnerListFailsCorrectly(string data, int index, int lastIndex)
+        {
+            Assert.NotNull(Rfc8941Parser.ParseItemOrInnerList(data, ref index, out _));
             Assert.Equal(lastIndex, index);
         }
 
@@ -374,7 +409,7 @@ namespace StructuredFieldValues.Tests
                     }
 
                     var index = 0;
-                    var error = Rfc8941Parser.ParseItem(rawItem, ref index, out var parsed);
+                    var error = Rfc8941Parser.ParseItemOrInnerList(rawItem, ref index, out var parsed);
                     if (mustFail)
                     {
                         try
