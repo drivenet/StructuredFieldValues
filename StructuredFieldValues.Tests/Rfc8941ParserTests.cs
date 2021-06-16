@@ -309,7 +309,7 @@ namespace StructuredFieldValues.Tests
             var parsedList = JsonConvert.DeserializeObject<ParsedItem[]>(list)!;
             var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters)!;
             Assert.Null(Rfc8941Parser.ParseInnerList(data, ref index, out var result));
-            Assert.Equal(parsedList, result.List);
+            Assert.Equal(parsedList, (IReadOnlyList<ParsedItem>)result.Item);
             Assert.Equal(parsedParameters, result.Parameters);
             Assert.Equal(lastIndex, index);
         }

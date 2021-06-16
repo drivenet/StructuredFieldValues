@@ -133,7 +133,7 @@ namespace StructuredFieldValues
             }
         }
 
-        public static ParseError? ParseInnerList(ReadOnlySpan<char> source, ref int index, out ParsedInnerList result)
+        public static ParseError? ParseInnerList(ReadOnlySpan<char> source, ref int index, out ParsedItem result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
@@ -680,7 +680,7 @@ namespace StructuredFieldValues
 #if !NET5_0_OR_GREATER
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
 
-        public static ParseError? ParseInnerList(string source, ref int index, out ParsedInnerList result) => ParseInnerList(source.AsSpan(), ref index, out result);
+        public static ParseError? ParseInnerList(string source, ref int index, out ParsedItem result) => ParseInnerList(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseItem(string source, ref int index, out ParsedItem result) => ParseItem(source.AsSpan(), ref index, out result);
 
