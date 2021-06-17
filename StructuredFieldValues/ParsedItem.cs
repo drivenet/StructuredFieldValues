@@ -29,5 +29,7 @@ namespace StructuredFieldValues
         public override bool Equals(object? obj) => obj is ParsedItem item && Equals(item);
 
         public override int GetHashCode() => Item.GetHashCode();
+
+        public override string? ToString() => _item?.ToString();
     }
 }
