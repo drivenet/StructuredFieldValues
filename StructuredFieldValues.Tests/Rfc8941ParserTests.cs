@@ -383,8 +383,8 @@ namespace StructuredFieldValues.Tests
 
                 var name = item.Value<string>("name") ?? throw new InvalidDataException($"Missing name for test in \"{fileName}\".");
                 var raw = (item.Value<JArray>("raw") ?? throw new InvalidDataException($"Missing raw value for test \"{name}\" in \"{fileName}\"."))
-                    .Select(t => t.Value<string>() ?? throw new InvalidDataException($"Null raw value for test \"{name}\" in \"{fileName}\"."))
-                    .ToList();
+                    .Select(t => t.Value<string>() ?? throw new InvalidDataException($"Null raw value for test \"{name}\" in \"{fileName}\"."));
+                var header = string.Join(",", raw);
                 var headerTypeString = item.Value<string>("header_type") ?? throw new InvalidDataException($"Missing header type for test in \"{fileName}\".");
                 if (!Enum.TryParse<HeaderType>(headerTypeString, true, out var headerType))
                 {
@@ -400,50 +400,48 @@ namespace StructuredFieldValues.Tests
 
                 var canFail = item.Value<bool>("can_fail");
 
-                var actual = new JArray();
-                foreach (var rawItem in raw)
+                ParseError? error;
+                JArray actual;
+                try
                 {
-                    if (actual.Count != 0)
-                    {
-                        throw new InvalidDataException($"Unexpected multiple raw data for test \"{name}\" in \"{fileName}\".");
-                    }
+                    error = Parse(headerType, header, out actual);
+                }
+                catch (Exception exception)
+                {
+                    throw new TestFailedException($"Failed to parse for test \"{name}\" in \"{fileName}\".", exception);
+                }
 
-                    var index = 0;
-                    var error = Rfc8941Parser.ParseItemOrInnerList(rawItem, ref index, out var parsed);
-                    if (mustFail)
+                if (mustFail)
+                {
+                    try
                     {
-                        try
+                        Assert.NotNull(error);
+                    }
+                    catch (NotNullException exception)
+                    {
+                        throw new TestFailedException($"Successful must-fail test \"{name}\" in \"{fileName}\".", exception);
+                    }
+                }
+                else
+                {
+                    if (canFail)
+                    {
+                        if (error is object)
                         {
-                            Assert.NotNull(error);
-                        }
-                        catch (NotNullException exception)
-                        {
-                            throw new TestFailedException($"Successful must-fail test \"{name}\" in \"{fileName}\".", exception);
+                            continue;
                         }
                     }
                     else
                     {
-                        if (canFail)
+                        try
                         {
-                            if (error is object)
-                            {
-                                continue;
-                            }
+                            Assert.Null(error);
                         }
-                        else
+                        catch (NullException exception)
                         {
-                            try
-                            {
-                                Assert.Null(error);
-                            }
-                            catch (NullException exception)
-                            {
-                                throw new TestFailedException($"Failing test \"{name}\" in \"{fileName}\":\n{error}", exception);
-                            }
+                            throw new TestFailedException($"Failing test \"{name}\" in \"{fileName}\":\n{error}", exception);
                         }
                     }
-
-                    actual = new JArray(parsed.Item, new JArray(parsed.Parameters.Select(p => new JArray(p.Key, p.Value)).ToList()));
                 }
 
                 buffer.Clear();
@@ -473,6 +471,43 @@ namespace StructuredFieldValues.Tests
                     throw new TestFailedException($"Mismatching result for test \"{name}\" in \"{fileName}\".", exception);
                 }
             }
+        }
+
+        private static ParseError? Parse(HeaderType headerType, string header, out JArray actual)
+        {
+            ParseError? error;
+            var index = 0;
+            switch (headerType)
+            {
+                case HeaderType.Item:
+                    error = Rfc8941Parser.ParseItem(header, ref index, out var parsedItem);
+                    actual = ConvertItem(parsedItem);
+                    break;
+
+                case HeaderType.List:
+                    error = Rfc8941Parser.ParseList(header, ref index, out var parsedList);
+                    actual = ConvertList(parsedList);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(headerType), headerType, "Unsupported header type.");
+            }
+
+            return error;
+
+            static object ConvertValue(object value) => value switch
+            {
+                Token token => new JObject { ["__type"] = "token", ["value"] = token.ToString() },
+                byte[] binary => new JObject { ["__type"] = "binary", ["value"] = Convert.ToBase64String(binary) },
+                IReadOnlyList<ParsedItem> list => ConvertList(list),
+                object other => other,
+            };
+
+            static JArray ConvertItem(in ParsedItem item) => new(
+                ConvertValue(item.Item),
+                new JArray(item.Parameters.Select(p => new JArray(p.Key, ConvertValue(p.Value)))));
+
+            static JArray ConvertList(IReadOnlyList<ParsedItem> list) => new(list.Select(i => ConvertItem(i)));
         }
     }
 }
