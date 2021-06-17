@@ -14,7 +14,7 @@ namespace StructuredFieldValues
             _parameters = parameters;
         }
 
-        public object Item => _item ?? CommonValues.EmptyObject;
+        public object Item => _item ?? CommonValues.Empty;
 
         public IReadOnlyDictionary<string, object> Parameters => _parameters ?? CommonValues.EmptyParameters;
 

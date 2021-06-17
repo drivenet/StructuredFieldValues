@@ -49,7 +49,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = CommonValues.EmptyObject;
+                            result = CommonValues.Empty;
                             return error;
                         }
                     }
@@ -63,7 +63,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = CommonValues.EmptyObject;
+                            result = CommonValues.Empty;
                             return error;
                         }
                     }
@@ -77,7 +77,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = CommonValues.EmptyObject;
+                            result = CommonValues.Empty;
                             return error;
                         }
                     }
@@ -91,7 +91,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = CommonValues.EmptyObject;
+                            result = CommonValues.Empty;
                             return error;
                         }
                     }
@@ -105,7 +105,7 @@ namespace StructuredFieldValues
                         }
                         else
                         {
-                            result = CommonValues.EmptyObject;
+                            result = CommonValues.Empty;
                             return error;
                         }
                     }
@@ -122,12 +122,12 @@ namespace StructuredFieldValues
                             }
                             else
                             {
-                                result = CommonValues.EmptyObject;
+                                result = CommonValues.Empty;
                                 return error;
                             }
                         }
 
-                        result = CommonValues.EmptyObject;
+                        result = CommonValues.Empty;
                         return new(index, "invalid discriminator");
                     }
             }
