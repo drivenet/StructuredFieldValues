@@ -463,7 +463,7 @@ namespace StructuredFieldValues.Tests
             static object ConvertValue(object value) => value switch
             {
                 Token token => new JObject { ["__type"] = "token", ["value"] = token.ToString() },
-                byte[] binary => new JObject { ["__type"] = "binary", ["value"] = Convert.ToBase64String(binary) },
+                byte[] binary => new JObject { ["__type"] = "binary", ["value"] = StringEncoder.ToBase32String(binary) },
                 IReadOnlyList<ParsedItem> list => ConvertList(list),
                 object other => other,
             };
