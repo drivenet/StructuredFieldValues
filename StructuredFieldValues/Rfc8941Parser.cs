@@ -133,6 +133,53 @@ namespace StructuredFieldValues
             }
         }
 
+        public static ParseError? ParseList(ReadOnlySpan<char> source, ref int index, out IReadOnlyList<ParsedItem> result)
+        {
+            CheckIndex(index);
+            var spanLength = source.Length;
+            var localIndex = index;
+            if (localIndex == spanLength)
+            {
+                result = CommonValues.Empty;
+                return null;
+            }
+
+            List<ParsedItem>? list = null;
+            while (true)
+            {
+                if (ParseItemOrInnerList(source, ref localIndex, out var item) is { } error)
+                {
+                    index = localIndex;
+                    result = CommonValues.Empty;
+                    return error;
+                }
+
+                (list ??= new()).Add(item);
+                localIndex = SkipOWS(source, localIndex);
+                if (localIndex >= spanLength)
+                {
+                    index = localIndex;
+                    result = list;
+                    return null;
+                }
+
+                if (source[localIndex] != ',')
+                {
+                    index = localIndex;
+                    result = CommonValues.Empty;
+                    return new(index, "invalid list separator");
+                }
+
+                localIndex = SkipOWS(source, localIndex + 1);
+                if (localIndex >= spanLength)
+                {
+                    index = localIndex;
+                    result = CommonValues.Empty;
+                    return new(index, "trailing comma encountered");
+                }
+            }
+        }
+
         public static ParseError? ParseItemOrInnerList(ReadOnlySpan<char> source, ref int index, out ParsedItem result)
         {
             if (index >= 0
@@ -693,6 +740,8 @@ namespace StructuredFieldValues
 #if !NET5_0_OR_GREATER
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
 
+        public static ParseError? ParseList(string source, ref int index, out IReadOnlyList<ParsedItem> result) => ParseList(source.AsSpan(), ref index, out result);
+
         public static ParseError? ParseItemOrInnerList(string source, ref int index, out ParsedItem result) => ParseItemOrInnerList(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseInnerList(string source, ref int index, out ParsedItem result) => ParseInnerList(source.AsSpan(), ref index, out result);
@@ -717,6 +766,17 @@ namespace StructuredFieldValues
         private static int SkipSP(ReadOnlySpan<char> source, int index)
         {
             while (index < source.Length && source[index] == ' ')
+            {
+                ++index;
+            }
+
+            return index;
+        }
+
+        private static int SkipOWS(ReadOnlySpan<char> source, int index)
+        {
+            while (index < source.Length
+                && source[index] is ' ' or '\t')
             {
                 ++index;
             }
