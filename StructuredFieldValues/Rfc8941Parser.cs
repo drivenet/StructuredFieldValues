@@ -596,20 +596,20 @@ namespace StructuredFieldValues
             return new(localIndex, "missing closing double quote");
         }
 
-        public static ParseError? ParseToken(ReadOnlySpan<char> source, ref int index, out string result)
+        public static ParseError? ParseToken(ReadOnlySpan<char> source, ref int index, out Token result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 1)
             {
-                result = "";
+                result = Token.Empty;
                 return new(index, "insufficient characters for token");
             }
 
             var character = source[index];
             if (character is not ((>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '*'))
             {
-                result = "";
+                result = Token.Empty;
                 return new(index, "invalid leading token character");
             }
 
@@ -629,11 +629,12 @@ namespace StructuredFieldValues
 
             var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
-            result = new string(slice);
+            var value = new string(slice);
 #else
-            result = new string(slice.ToArray());
+            var value = new string(slice.ToArray());
 #endif
             index = localIndex;
+            result = new(value);
             return null;
         }
 
@@ -708,7 +709,7 @@ namespace StructuredFieldValues
 
         public static ParseError? ParseString(string source, ref int index, out string result) => ParseString(source.AsSpan(), ref index, out result);
 
-        public static ParseError? ParseToken(string source, ref int index, out string result) => ParseToken(source.AsSpan(), ref index, out result);
+        public static ParseError? ParseToken(string source, ref int index, out Token result) => ParseToken(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseByteSequence(string source, ref int index, out ReadOnlyMemory<byte> result) => ParseByteSequence(source.AsSpan(), ref index, out result);
 #endif

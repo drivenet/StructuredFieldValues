@@ -63,7 +63,7 @@ namespace StructuredFieldValues.Tests
                 result = Convert.ToBase64String(bytes.ToArray());
             }
 
-            Assert.Equal(value, result);
+            Assert.Equal(value, result, ReverseEqualityComparer<object>.Instance);
             Assert.Equal(lastIndex, index);
         }
 
@@ -207,7 +207,7 @@ namespace StructuredFieldValues.Tests
         public void ParseTokenWorks(string data, int index, string value, int lastIndex)
         {
             Assert.Null(Rfc8941Parser.ParseToken(data, ref index, out var result));
-            Assert.Equal(value, result);
+            Assert.Equal(value, result.ToString());
             Assert.Equal(lastIndex, index);
         }
 
@@ -258,7 +258,7 @@ namespace StructuredFieldValues.Tests
         {
             var parsedValue = JsonConvert.DeserializeObject<Dictionary<string, object>>(value);
             Assert.Null(Rfc8941Parser.ParseParameters(data, ref index, out var result));
-            Assert.Equal(parsedValue, result);
+            Assert.Equal(result, parsedValue); // Exchanged expected and actual to fix string.Equals(Token) != Token.Equals(string) issue
             Assert.Equal(lastIndex, index);
         }
 
@@ -309,7 +309,7 @@ namespace StructuredFieldValues.Tests
             var parsedList = JsonConvert.DeserializeObject<ParsedItem[]>(list)!;
             var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters)!;
             Assert.Null(Rfc8941Parser.ParseInnerList(data, ref index, out var result));
-            Assert.Equal(parsedList, (IReadOnlyList<ParsedItem>)result.Item);
+            Assert.Equal(parsedList, (IReadOnlyList<ParsedItem>)result.Item, ReverseEqualityComparer<ParsedItem>.Instance);
             Assert.Equal(parsedParameters, result.Parameters);
             Assert.Equal(lastIndex, index);
         }
@@ -337,12 +337,12 @@ namespace StructuredFieldValues.Tests
             Assert.Null(Rfc8941Parser.ParseItemOrInnerList(data, ref index, out var result));
             if (result.Item is IReadOnlyList<ParsedItem> { } resultList)
             {
-                Assert.Equal(parsedList, resultList);
+                Assert.Equal(parsedList, resultList, ReverseEqualityComparer<ParsedItem>.Instance);
                 Assert.Equal(parsedParameters, result.Parameters);
             }
             else
             {
-                Assert.Equal(Assert.Single(parsedList), result);
+                Assert.Equal(Assert.Single(parsedList), result, ReverseEqualityComparer<ParsedItem>.Instance);
                 Assert.Empty(parsedParameters);
             }
 
