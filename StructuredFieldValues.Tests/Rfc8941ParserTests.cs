@@ -362,114 +362,79 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
-        [InlineData("examples.json")]
-        public void WhatWgTestsPass(string fileName)
+        [WhatWgTestsData("examples.json")]
+        public void WhatWgTestsPass(WhatWgTestCase testCase)
         {
-            JArray items;
-            using (var file = File.OpenText("../../../../httpwg/" + fileName))
+            ParseError? error;
+            JArray actual;
+            try
             {
-                using var reader = new JsonTextReader(file);
-                items = (JArray)JToken.ReadFrom(reader);
+                error = Parse(testCase.HeaderType, testCase.Header, out actual);
+            }
+            catch (Exception exception)
+            {
+                throw new TestFailedException("Failed to parse.", exception);
             }
 
-            var buffer = new StringBuilder();
-            using var stringWriter = new StringWriter(buffer);
-            foreach (var item in items)
+            if (testCase.MustFail)
             {
-                if (item is null)
-                {
-                    continue;
-                }
-
-                var name = item.Value<string>("name") ?? throw new InvalidDataException($"Missing name for test in \"{fileName}\".");
-                var raw = (item.Value<JArray>("raw") ?? throw new InvalidDataException($"Missing raw value for test \"{name}\" in \"{fileName}\"."))
-                    .Select(t => t.Value<string>() ?? throw new InvalidDataException($"Null raw value for test \"{name}\" in \"{fileName}\"."));
-                var header = string.Join(",", raw);
-                var headerTypeString = item.Value<string>("header_type") ?? throw new InvalidDataException($"Missing header type for test in \"{fileName}\".");
-                if (!Enum.TryParse<HeaderType>(headerTypeString, true, out var headerType))
-                {
-                    throw new InvalidDataException($"Invalid header type \"{headerTypeString}\" for test \"{name}\" in \"{fileName}\".");
-                }
-
-                var mustFail = item.Value<bool>("must_fail");
-                var expected = item["expected"];
-                if (expected is null && !mustFail)
-                {
-                    throw new InvalidDataException($"Missing expected data for non-failing test \"{name}\" in \"{fileName}\".");
-                }
-
-                var canFail = item.Value<bool>("can_fail");
-
-                ParseError? error;
-                JArray actual;
                 try
                 {
-                    error = Parse(headerType, header, out actual);
+                    Assert.NotNull(error);
                 }
-                catch (Exception exception)
+                catch (NotNullException exception)
                 {
-                    throw new TestFailedException($"Failed to parse for test \"{name}\" in \"{fileName}\".", exception);
+                    throw new TestFailedException("Successful must-fail test.", exception);
                 }
-
-                if (mustFail)
+            }
+            else
+            {
+                if (testCase.CanFail)
                 {
-                    try
+                    if (error is object)
                     {
-                        Assert.NotNull(error);
-                    }
-                    catch (NotNullException exception)
-                    {
-                        throw new TestFailedException($"Successful must-fail test \"{name}\" in \"{fileName}\".", exception);
+                        return;
                     }
                 }
                 else
                 {
-                    if (canFail)
+                    try
                     {
-                        if (error is object)
-                        {
-                            continue;
-                        }
+                        Assert.Null(error);
                     }
-                    else
+                    catch (NullException exception)
                     {
-                        try
-                        {
-                            Assert.Null(error);
-                        }
-                        catch (NullException exception)
-                        {
-                            throw new TestFailedException($"Failing test \"{name}\" in \"{fileName}\":\n{error}", exception);
-                        }
+                        throw new TestFailedException($"Unexpected parse error:\n{error}", exception);
                     }
                 }
+            }
 
-                buffer.Clear();
-                using (var writer = new JsonTextWriter(stringWriter) { CloseOutput = false })
-                {
-                    expected!.WriteTo(writer);
-                }
+            var buffer = new StringBuilder();
+            using var stringWriter = new StringWriter(buffer);
+            using (var writer = new JsonTextWriter(stringWriter) { CloseOutput = false })
+            {
+                (testCase.Expected ?? throw new InvalidDataException("Missing expected data for non-failing test.")).WriteTo(writer);
+            }
 
-                stringWriter.Flush();
-                var expectedString = buffer.ToString();
+            stringWriter.Flush();
+            var expectedString = buffer.ToString();
 
-                buffer.Clear();
-                using (var writer = new JsonTextWriter(stringWriter) { CloseOutput = false })
-                {
-                    actual.WriteTo(writer);
-                }
+            buffer.Clear();
+            using (var writer = new JsonTextWriter(stringWriter) { CloseOutput = false })
+            {
+                actual.WriteTo(writer);
+            }
 
-                stringWriter.Flush();
-                var actualString = buffer.ToString();
+            stringWriter.Flush();
+            var actualString = buffer.ToString();
 
-                try
-                {
-                    Assert.Equal(expectedString, actualString);
-                }
-                catch (EqualException exception)
-                {
-                    throw new TestFailedException($"Mismatching result for test \"{name}\" in \"{fileName}\".", exception);
-                }
+            try
+            {
+                Assert.Equal(expectedString, actualString);
+            }
+            catch (EqualException exception)
+            {
+                throw new TestFailedException("Mismatching result.", exception);
             }
         }
 
