@@ -300,9 +300,9 @@ namespace StructuredFieldValues
 
             var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
-            result = new string(slice);
+            result = new(slice);
 #else
-            result = new string(slice.ToArray());
+            result = new(slice.ToArray());
 #endif
             index = localIndex;
             return null;
@@ -567,9 +567,9 @@ namespace StructuredFieldValues
                         {
                             var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
-                            result = new string(slice);
+                            result = new(slice);
 #else
-                            result = new string(slice.ToArray());
+                            result = new(slice.ToArray());
 #endif
                         }
 
