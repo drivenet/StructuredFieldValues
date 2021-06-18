@@ -781,10 +781,19 @@ namespace StructuredFieldValues
                 return new(index, "missing closing byte sequence character");
             }
 
+            var binarySlice = slice.Slice(0, length);
+
+            // This is required to pass strict tests
+            if (binarySlice.IndexOf(' ') >= 0)
+            {
+                result = Array.Empty<byte>();
+                return new(index, "unexpected space in byte sequence");
+            }
+
 #if NET5_0_OR_GREATER
             var expectedLength = length * 3 / 4;
             var buffer = new byte[expectedLength];
-            if (!Convert.TryFromBase64Chars(slice.Slice(0, length), buffer, out var written))
+            if (!Convert.TryFromBase64Chars(binarySlice, buffer, out var written))
             {
                 result = Array.Empty<byte>();
                 return new(index, "invalid byte sequence encoding");
@@ -794,7 +803,7 @@ namespace StructuredFieldValues
 #else
             try
             {
-                result = Convert.FromBase64CharArray(slice.Slice(0, length).ToArray(), 0, length);
+                result = Convert.FromBase64CharArray(binarySlice.ToArray(), 0, length);
             }
             catch (FormatException)
             {
