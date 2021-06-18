@@ -133,6 +133,76 @@ namespace StructuredFieldValues
             }
         }
 
+        public static ParseError? ParseDictionary(ReadOnlySpan<char> source, ref int index, out IReadOnlyDictionary<string, ParsedItem> result)
+        {
+            CheckIndex(index);
+            var spanLength = source.Length;
+            var localIndex = index;
+            if (localIndex == spanLength)
+            {
+                result = CommonValues.EmptyDictionary;
+                return null;
+            }
+
+            Dictionary<string, ParsedItem>? dictionary = null;
+            while (true)
+            {
+                if (ParseKey(source, ref localIndex, out var key) is { } keyError)
+                {
+                    index = localIndex;
+                    result = CommonValues.EmptyDictionary;
+                    return keyError;
+                }
+
+                ParsedItem value;
+                if (localIndex != spanLength && source[localIndex] == '=')
+                {
+                    ++localIndex;
+                    if (ParseItemOrInnerList(source, ref localIndex, out value) is { } itemError)
+                    {
+                        index = localIndex;
+                        result = CommonValues.EmptyDictionary;
+                        return itemError;
+                    }
+                }
+                else
+                {
+                    if (ParseParameters(source, ref localIndex, out var parameters) is { } itemError)
+                    {
+                        index = localIndex;
+                        result = CommonValues.EmptyDictionary;
+                        return itemError;
+                    }
+
+                    value = new(true, parameters);
+                }
+
+                (dictionary ??= new())[key] = value;
+                localIndex = SkipOWS(source, localIndex);
+                if (localIndex == spanLength)
+                {
+                    index = localIndex;
+                    result = dictionary;
+                    return null;
+                }
+
+                if (source[localIndex] != ',')
+                {
+                    index = localIndex;
+                    result = CommonValues.EmptyDictionary;
+                    return new(index, "invalid dictionary separator");
+                }
+
+                localIndex = SkipOWS(source, localIndex + 1);
+                if (localIndex == spanLength)
+                {
+                    index = localIndex;
+                    result = CommonValues.EmptyDictionary;
+                    return new(index, "trailing comma encountered in dictionary");
+                }
+            }
+        }
+
         public static ParseError? ParseList(ReadOnlySpan<char> source, ref int index, out IReadOnlyList<ParsedItem> result)
         {
             CheckIndex(index);
@@ -175,7 +245,7 @@ namespace StructuredFieldValues
                 {
                     index = localIndex;
                     result = CommonValues.Empty;
-                    return new(index, "trailing comma encountered");
+                    return new(index, "trailing comma encountered in list");
                 }
             }
         }
@@ -739,6 +809,8 @@ namespace StructuredFieldValues
 
 #if !NET5_0_OR_GREATER
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
+
+        public static ParseError? ParseDictionary(string source, ref int index, out IReadOnlyDictionary<string, ParsedItem> result) => ParseDictionary(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseList(string source, ref int index, out IReadOnlyList<ParsedItem> result) => ParseList(source.AsSpan(), ref index, out result);
 

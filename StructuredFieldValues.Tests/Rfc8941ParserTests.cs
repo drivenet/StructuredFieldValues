@@ -456,6 +456,11 @@ namespace StructuredFieldValues.Tests
                     actual = ConvertList(parsedList);
                     break;
 
+                case HeaderType.Dictionary:
+                    error = Rfc8941Parser.ParseDictionary(header, ref index, out var parsedDictionary);
+                    actual = ConvertDictionary(parsedDictionary);
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(headerType), headerType, "Unsupported header type.");
             }
@@ -475,6 +480,8 @@ namespace StructuredFieldValues.Tests
                 new JArray(item.Parameters.Select(p => new JArray(p.Key, ConvertValue(p.Value)))));
 
             static JArray ConvertList(IReadOnlyList<ParsedItem> list) => new(list.Select(i => ConvertItem(i)));
+
+            static JArray ConvertDictionary(IReadOnlyDictionary<string, ParsedItem> dictionary) => new(dictionary.Select(p => new JArray(p.Key, ConvertItem(p.Value))));
         }
     }
 }
