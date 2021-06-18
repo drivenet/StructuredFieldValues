@@ -156,7 +156,7 @@ namespace StructuredFieldValues
 
                 (list ??= new()).Add(item);
                 localIndex = SkipOWS(source, localIndex);
-                if (localIndex >= spanLength)
+                if (localIndex == spanLength)
                 {
                     index = localIndex;
                     result = list;
@@ -171,7 +171,7 @@ namespace StructuredFieldValues
                 }
 
                 localIndex = SkipOWS(source, localIndex + 1);
-                if (localIndex >= spanLength)
+                if (localIndex == spanLength)
                 {
                     index = localIndex;
                     result = CommonValues.Empty;
@@ -219,7 +219,7 @@ namespace StructuredFieldValues
             var initialIndex = index;
             var localIndex = initialIndex;
             List<ParsedItem>? buffer = null;
-            while (localIndex < spanLength)
+            while (localIndex != spanLength)
             {
                 localIndex = SkipSP(source, localIndex);
                 if (source[localIndex] == ')')
@@ -276,7 +276,7 @@ namespace StructuredFieldValues
             Dictionary<string, object>? parameters = null;
             var spanLength = source.Length;
             var localIndex = index;
-            while (localIndex < spanLength)
+            while (localIndex != spanLength)
             {
                 if (source[localIndex] != ';')
                 {
@@ -292,7 +292,7 @@ namespace StructuredFieldValues
                 }
 
                 object value;
-                if (localIndex < spanLength && source[localIndex] == '=')
+                if (localIndex != spanLength && source[localIndex] == '=')
                 {
                     ++localIndex;
                     if (ParseBareItem(source, ref localIndex, out value) is { } valueError)
@@ -334,7 +334,7 @@ namespace StructuredFieldValues
 
             var initialIndex = index;
             var localIndex = ++index;
-            while (localIndex < spanLength)
+            while (localIndex != spanLength)
             {
                 character = source[localIndex];
                 if (character is not ((>= 'a' and <= 'z') or (>= '0' and <= '9') or '_' or '-' or '.' or '*'))
@@ -417,7 +417,7 @@ namespace StructuredFieldValues
             var separatorIndex = -1;
             var initialIndex = index;
             var localIndex = initialIndex;
-            while (localIndex < spanLength)
+            while (localIndex != spanLength)
             {
                 var character = source[localIndex];
                 var earlyBreak = false;
@@ -564,14 +564,14 @@ namespace StructuredFieldValues
             var initialIndex = index;
             var localIndex = initialIndex;
             StringBuilder? buffer = null;
-            while (localIndex < spanLength)
+            while (localIndex != spanLength)
             {
                 var character = source[localIndex];
                 switch (character)
                 {
                     case '\\':
                         ++localIndex;
-                        if (localIndex >= spanLength)
+                        if (localIndex == spanLength)
                         {
                             index = localIndex;
                             result = "";
@@ -662,7 +662,7 @@ namespace StructuredFieldValues
 
             var initialIndex = index;
             var localIndex = ++index;
-            while (localIndex < spanLength)
+            while (localIndex != spanLength)
             {
                 character = source[localIndex];
                 if (character is not ((>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9')
