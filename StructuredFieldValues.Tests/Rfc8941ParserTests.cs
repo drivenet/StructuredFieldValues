@@ -367,7 +367,7 @@ namespace StructuredFieldValues.Tests
 
         [Theory]
         [WhatWgTestsData("*.json")]
-        public void WhatWgTestsPass(WhatWgTestCase testCase)
+        internal void WhatWgTestsPass(WhatWgTestCase testCase)
         {
             ParseError? error;
             JArray actual;

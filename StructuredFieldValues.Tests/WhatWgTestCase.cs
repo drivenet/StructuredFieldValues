@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace StructuredFieldValues.Tests
 {
-    public sealed class WhatWgTestCase
+    internal sealed class WhatWgTestCase
     {
         public WhatWgTestCase(string fileName, string name, FieldType headerType, string header, JToken? expected, bool mustFail, bool canFail)
         {
