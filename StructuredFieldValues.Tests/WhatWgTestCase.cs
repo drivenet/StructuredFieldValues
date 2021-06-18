@@ -6,7 +6,7 @@ namespace StructuredFieldValues.Tests
 {
     public sealed class WhatWgTestCase
     {
-        public WhatWgTestCase(string fileName, string name, HeaderType headerType, string header, JToken? expected, bool mustFail, bool canFail)
+        public WhatWgTestCase(string fileName, string name, FieldType headerType, string header, JToken? expected, bool mustFail, bool canFail)
         {
             FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -17,7 +17,7 @@ namespace StructuredFieldValues.Tests
             CanFail = canFail;
         }
 
-        public HeaderType HeaderType { get; }
+        public FieldType HeaderType { get; }
 
         public string Header { get; }
 

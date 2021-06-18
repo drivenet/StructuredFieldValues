@@ -1,6 +1,6 @@
 ﻿namespace StructuredFieldValues
 {
-    public enum HeaderType
+    public enum FieldType
     {
         Item,
         List,

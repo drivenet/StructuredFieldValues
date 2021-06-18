@@ -45,7 +45,7 @@ namespace StructuredFieldValues.Tests
                     .Select(t => t.Value<string>() ?? throw new InvalidDataException($"Null raw value for test \"{name}\" in \"{fileName}\"."));
                 var header = string.Join(",", raw);
                 var headerTypeString = item.Value<string>("header_type") ?? throw new InvalidDataException($"Missing header type for test in \"{fileName}\".");
-                if (!Enum.TryParse<HeaderType>(headerTypeString, true, out var headerType))
+                if (!Enum.TryParse<FieldType>(headerTypeString, true, out var headerType))
                 {
                     throw new InvalidDataException($"Invalid header type \"{headerTypeString}\" for test \"{name}\" in \"{fileName}\".");
                 }

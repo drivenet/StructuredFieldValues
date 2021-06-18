@@ -442,30 +442,17 @@ namespace StructuredFieldValues.Tests
             }
         }
 
-        private static ParseError? Parse(HeaderType headerType, string header, out JArray actual)
+        private static ParseError? Parse(FieldType headerType, string header, out JArray actual)
         {
-            ParseError? error;
             var index = 0;
-            switch (headerType)
+            var error = Rfc8941Parser.ParseField(header, headerType, ref index, out var result);
+            actual = result switch
             {
-                case HeaderType.Item:
-                    error = Rfc8941Parser.ParseItem(header, ref index, out var parsedItem);
-                    actual = ConvertItem(parsedItem);
-                    break;
-
-                case HeaderType.List:
-                    error = Rfc8941Parser.ParseList(header, ref index, out var parsedList);
-                    actual = ConvertList(parsedList);
-                    break;
-
-                case HeaderType.Dictionary:
-                    error = Rfc8941Parser.ParseDictionary(header, ref index, out var parsedDictionary);
-                    actual = ConvertDictionary(parsedDictionary);
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(headerType), headerType, "Unsupported header type.");
-            }
+                ParsedItem item => ConvertItem(item),
+                IReadOnlyList<ParsedItem> list => ConvertList(list),
+                IReadOnlyDictionary<string, ParsedItem> dictionary => ConvertDictionary(dictionary),
+                object any => throw new InvalidDataException($"Unsupported result {any}."),
+            };
 
             return error;
 

@@ -9,6 +9,35 @@ namespace StructuredFieldValues
     {
         private static readonly object True = true;
 
+        public static ParseError? ParseField(ReadOnlySpan<char> source, FieldType fieldType, ref int index, out object result)
+        {
+            CheckIndex(index);
+            index = SkipSP(source, index);
+            ParseError? error;
+            switch (fieldType)
+            {
+                case FieldType.Item:
+                    error = ParseItem(source, ref index, out var item);
+                    result = item;
+                    break;
+
+                case FieldType.List:
+                    error = ParseList(source, ref index, out var list);
+                    result = list;
+                    break;
+
+                case FieldType.Dictionary:
+                    error = ParseDictionary(source, ref index, out var dictionary);
+                    result = dictionary;
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(fieldType), fieldType, "Unsupported field type.");
+            }
+
+            return error;
+        }
+
         public static ParseError? ParseBareItem(ReadOnlySpan<char> source, ref int index, out object result)
         {
             CheckIndex(index);
@@ -817,6 +846,8 @@ namespace StructuredFieldValues
         }
 
 #if !NET5_0_OR_GREATER
+        public static ParseError? ParseField(string source, FieldType fieldType, ref int index, out object result) => ParseField(source.AsSpan(), fieldType, ref index, out result);
+
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseDictionary(string source, ref int index, out IReadOnlyDictionary<string, ParsedItem> result) => ParseDictionary(source.AsSpan(), ref index, out result);
