@@ -102,19 +102,19 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
-        [InlineData("0", 0, 0.0, 1)]
-        [InlineData("1", 0, 1.0, 1)]
-        [InlineData("-17", 0, -17.0, 3)]
-        [InlineData("2873913q123", 0, 2873913.0, 7)]
-        [InlineData("q1232873913", 4, 2873913.0, 11)]
-        [InlineData("1zxcc", 0, 1.0, 1)]
-        [InlineData("-913vwe", 0, -913.0, 4)]
-        [InlineData("1239712839", 0, 1239712839.0, 10)]
-        [InlineData("132840932840234", 0, 132840932840234L, 16)]
+        [InlineData("0", 0, 0L, 1)]
+        [InlineData("1", 0, 1L, 1)]
+        [InlineData("-17", 0, -17L, 3)]
+        [InlineData("2873913q123", 0, 2873913L, 7)]
+        [InlineData("q1232873913", 4, 2873913L, 11)]
+        [InlineData("1zxcc", 0, 1L, 1)]
+        [InlineData("-913vwe", 0, -913L, 4)]
+        [InlineData("1239712839", 0, 1239712839L, 10)]
+        [InlineData("132840932840234", 0, 132840932840234L, 15)]
         [InlineData("484944311926.6", 0, 484944311926.6, 14)]
         [InlineData("472389478934.123", 0, 472389478934.123, 16)]
-        [InlineData("987654321098765", 0, 987654321098765.0, 15)]
-        public void ParseNumberWorks(string data, int index, double value, int lastIndex)
+        [InlineData("987654321098765", 0, 987654321098765L, 15)]
+        public void ParseNumberWorks(string data, int index, object value, int lastIndex)
         {
             Assert.Null(Rfc8941Parser.ParseNumber(data, ref index, out var result));
             Assert.Equal(value, result);
@@ -124,7 +124,7 @@ namespace StructuredFieldValues.Tests
         [Theory]
         [InlineData("1234567890123456", 0, 15)]
         [InlineData("", 0, 0)]
-        [InlineData("472389478934.1234", 0, 12)]
+        [InlineData("472389478934.1234", 0, 16)]
         [InlineData("9876543210987654.", 0, 15)]
         [InlineData("9876543210981.0", 0, 13)]
         [InlineData("9876543210987.123", 0, 13)]
@@ -355,7 +355,7 @@ namespace StructuredFieldValues.Tests
 
         [Theory]
         [InlineData("", 0, 0)]
-        [InlineData("  ", 1, 2)]
+        [InlineData("  ", 1, 1)]
         [InlineData(" (", 1, 2)]
         [InlineData("  ( abc", 2, 7)]
         [InlineData(" ( some", 1, 7)]

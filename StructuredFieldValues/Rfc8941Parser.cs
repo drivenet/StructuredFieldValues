@@ -90,13 +90,6 @@ namespace StructuredFieldValues
                     {
                         if (ParseNumber(source, ref index, out var parsed) is not { } error)
                         {
-                            var integer = (long)parsed;
-                            if (parsed == integer)
-                            {
-                                result = integer;
-                                return null;
-                            }
-
                             result = parsed;
                             return null;
                         }
@@ -528,13 +521,13 @@ namespace StructuredFieldValues
             }
         }
 
-        public static ParseError? ParseNumber(ReadOnlySpan<char> source, ref int index, out double result)
+        public static ParseError? ParseNumber(ReadOnlySpan<char> source, ref int index, out object result)
         {
             CheckIndex(index);
             var spanLength = source.Length;
             if (spanLength - index < 1)
             {
-                result = default;
+                result = CommonValues.Empty;
                 return new(index, "insufficient characters for number");
             }
 
@@ -570,14 +563,14 @@ namespace StructuredFieldValues
                         if (separatorIndex >= 0)
                         {
                             index = localIndex;
-                            result = default;
+                            result = CommonValues.Empty;
                             return new(initialIndex, "misplaced decimal '.'");
                         }
 
                         if (length > 12)
                         {
                             index = localIndex;
-                            result = default;
+                            result = CommonValues.Empty;
                             return new(localIndex, "integral part of decimal is too long", character);
                         }
 
@@ -600,7 +593,7 @@ namespace StructuredFieldValues
                     if (length > 15)
                     {
                         index = localIndex;
-                        result = default;
+                        result = CommonValues.Empty;
                         return new(localIndex, "integer is too long ({0})", length);
                     }
                 }
@@ -609,7 +602,7 @@ namespace StructuredFieldValues
                     if (length > 16)
                     {
                         index = localIndex;
-                        result = default;
+                        result = CommonValues.Empty;
                         return new(localIndex, "decimal is too long ({0})", length);
                     }
 
@@ -617,7 +610,7 @@ namespace StructuredFieldValues
                     if (fractionLength > 3)
                     {
                         index = localIndex;
-                        result = default;
+                        result = CommonValues.Empty;
                         return new(initialIndex, "decimal fraction is too long ({0})", fractionLength);
                     }
                 }
@@ -628,11 +621,10 @@ namespace StructuredFieldValues
             index = localIndex;
             if (index == initialIndex)
             {
-                result = default;
+                result = CommonValues.Empty;
                 return new(index, "insufficient digits for number");
             }
 
-            double value;
             if (separatorIndex < 0)
             {
                 var parsed = 0L;
@@ -642,29 +634,35 @@ namespace StructuredFieldValues
                     parsed += source[i] - '0';
                 }
 
-                value = parsed;
+                if (isNegative)
+                {
+                    parsed = -parsed;
+                }
+
+                result = parsed;
             }
             else
             {
                 var slice = source.Slice(initialIndex, index - initialIndex);
 #if NET5_0_OR_GREATER
-                if (!double.TryParse(slice, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value))
+                if (!double.TryParse(slice, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var parsed))
 #else
                 var valueString = new string(slice.ToArray());
-                if (!double.TryParse(valueString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value))
+                if (!double.TryParse(valueString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var parsed))
 #endif
                 {
-                    result = default;
+                    result = CommonValues.Empty;
                     return new(initialIndex, "failed to parse decimal");
                 }
+
+                if (isNegative)
+                {
+                    parsed = -parsed;
+                }
+
+                result = parsed;
             }
 
-            if (isNegative)
-            {
-                value = -value;
-            }
-
-            result = value;
             return null;
         }
 
@@ -898,7 +896,7 @@ namespace StructuredFieldValues
 
         public static ParseError? ParseBoolean(string source, ref int index, out bool result) => ParseBoolean(source.AsSpan(), ref index, out result);
 
-        public static ParseError? ParseNumber(string source, ref int index, out double result) => ParseNumber(source.AsSpan(), ref index, out result);
+        public static ParseError? ParseNumber(string source, ref int index, out object result) => ParseNumber(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseString(string source, ref int index, out string result) => ParseString(source.AsSpan(), ref index, out result);
 
