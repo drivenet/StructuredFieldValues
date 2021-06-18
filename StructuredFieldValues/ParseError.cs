@@ -3,6 +3,9 @@ using System.Globalization;
 
 namespace StructuredFieldValues
 {
+    /// <summary>
+    ///     Represents an error that occured while parsing structured field values.
+    /// </summary>
 #pragma warning disable CA1815 // Override equals and operator equals on value types -- not needed here
     public readonly struct ParseError : IFormattable
 #pragma warning restore CA1815 // Override equals and operator equals on value types
