@@ -364,7 +364,7 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
-        [WhatWgTestsData("examples.json")]
+        [WhatWgTestsData("*.json")]
         public void WhatWgTestsPass(WhatWgTestCase testCase)
         {
             ParseError? error;
