@@ -386,6 +386,8 @@ namespace StructuredFieldValues.Tests
                 {
                     throw new TestFailedException("Successful must-fail test.", exception);
                 }
+
+                return;
             }
             else
             {
