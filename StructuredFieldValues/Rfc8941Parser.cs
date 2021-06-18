@@ -875,7 +875,6 @@ namespace StructuredFieldValues
             return null;
         }
 
-#if !NET5_0_OR_GREATER
         public static ParseError? ParseField(string source, FieldType fieldType, ref int index, out object result) => ParseField(source.AsSpan(), fieldType, ref index, out result);
 
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
@@ -903,7 +902,6 @@ namespace StructuredFieldValues
         public static ParseError? ParseToken(string source, ref int index, out Token result) => ParseToken(source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseByteSequence(string source, ref int index, out ReadOnlyMemory<byte> result) => ParseByteSequence(source.AsSpan(), ref index, out result);
-#endif
 
         private static int SkipSP(ReadOnlySpan<char> source, int index)
         {
