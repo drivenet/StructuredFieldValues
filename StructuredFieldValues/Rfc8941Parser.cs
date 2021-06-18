@@ -594,6 +594,7 @@ namespace StructuredFieldValues
                     break;
                 }
 
+                ++length;
                 if (separatorIndex < 0)
                 {
                     if (length > 15)
