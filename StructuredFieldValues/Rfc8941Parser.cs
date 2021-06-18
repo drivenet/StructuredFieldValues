@@ -174,7 +174,7 @@ namespace StructuredFieldValues
                         return itemError;
                     }
 
-                    value = new(true, parameters);
+                    value = new(True, parameters);
                 }
 
                 (dictionary ??= new())[key] = value;
