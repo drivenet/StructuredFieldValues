@@ -290,7 +290,7 @@ namespace StructuredFieldValues.Tests
         {
             var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters);
             Assert.Null(Rfc8941Parser.ParseItem(data, ref index, out var result));
-            Assert.Equal(item, result.Item);
+            Assert.Equal(item, result.Value);
             Assert.Equal(parsedParameters, result.Parameters);
             Assert.Equal(lastIndex, index);
         }
@@ -306,13 +306,13 @@ namespace StructuredFieldValues.Tests
 
         [Theory]
         [InlineData("!!dx();v=86;q=\"asd\"", 4, "[]", "{v: 86, q: 'asd'}", 19)]
-        [InlineData("(1;sdd=73.1;q=64 *dedx)", 0, "[{item: 1, parameters: {sdd: 73.1, q: 64}}, {item: '*dedx', parameters: {}}]", "{}", 23)]
+        [InlineData("(1;sdd=73.1;q=64 *dedx)", 0, "[{value: 1, parameters: {sdd: 73.1, q: 64}}, {value: '*dedx', parameters: {}}]", "{}", 23)]
         public void ParseInnerListWorks(string data, int index, string list, string parameters, int lastIndex)
         {
             var parsedList = JsonConvert.DeserializeObject<ParsedItem[]>(list)!;
             var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters)!;
             Assert.Null(Rfc8941Parser.ParseInnerList(data, ref index, out var result));
-            Assert.Equal(parsedList, (IReadOnlyList<ParsedItem>)result.Item, ReverseEqualityComparer<ParsedItem>.Instance);
+            Assert.Equal(parsedList, (IReadOnlyList<ParsedItem>)result.Value, ReverseEqualityComparer<ParsedItem>.Instance);
             Assert.Equal(parsedParameters, result.Parameters);
             Assert.Equal(lastIndex, index);
         }
@@ -331,15 +331,15 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
-        [InlineData("!!\"Chromium\";v=\"86\", \"\"Not\\A;Brand\";v=\"99\", \"Google Chrome\";v=\"86\"", 2, "[{item: 'Chromium', parameters: {v: '86'}}]", "{}", 19)]
+        [InlineData("!!\"Chromium\";v=\"86\", \"\"Not\\A;Brand\";v=\"99\", \"Google Chrome\";v=\"86\"", 2, "[{value: 'Chromium', parameters: {v: '86'}}]", "{}", 19)]
         [InlineData("!!dx();v=86;q=\"asd\"", 4, "[]", "{v: 86, q: 'asd'}", 19)]
-        [InlineData("(1;sdd=73.1;q=64 *dedx)", 0, "[{item: 1, parameters: {sdd: 73.1, q: 64}}, {item: '*dedx', parameters: {}}]", "{}", 23)]
+        [InlineData("(1;sdd=73.1;q=64 *dedx)", 0, "[{value: 1, parameters: {sdd: 73.1, q: 64}}, {value: '*dedx', parameters: {}}]", "{}", 23)]
         public void ParseItemOrInnerListWorks(string data, int index, string list, string parameters, int lastIndex)
         {
             var parsedList = JsonConvert.DeserializeObject<ParsedItem[]>(list)!;
             var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters)!;
             Assert.Null(Rfc8941Parser.ParseItemOrInnerList(data, ref index, out var result));
-            if (result.Item is IReadOnlyList<ParsedItem> { } resultList)
+            if (result.Value is IReadOnlyList<ParsedItem> { } resultList)
             {
                 Assert.Equal(parsedList, resultList, ReverseEqualityComparer<ParsedItem>.Instance);
                 Assert.Equal(parsedParameters, result.Parameters);
@@ -447,7 +447,7 @@ namespace StructuredFieldValues.Tests
         private static ParseError? Parse(FieldType headerType, string header, out JArray actual)
         {
             var index = 0;
-            var error = Rfc8941Parser.ParseField(header, headerType, ref index, out var result);
+            var error = Rfc8941Parser.ParseField(headerType, header, ref index, out var result);
             actual = result switch
             {
                 ParsedItem item => ConvertItem(item),
@@ -467,7 +467,7 @@ namespace StructuredFieldValues.Tests
             };
 
             static JArray ConvertItem(in ParsedItem item) => new(
-                ConvertValue(item.Item),
+                ConvertValue(item.Value),
                 new JArray(item.Parameters.Select(p => new JArray(p.Key, ConvertValue(p.Value)))));
 
             static JArray ConvertList(IReadOnlyList<ParsedItem> list) => new(list.Select(i => ConvertItem(i)));

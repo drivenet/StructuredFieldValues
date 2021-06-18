@@ -5,14 +5,67 @@ using System.Text;
 
 namespace StructuredFieldValues
 {
-    public static class Rfc8941Parser
+    /// <summary>
+    ///     This is an RFC 8941-compliant parser of structured field values for HTTP. For most parsing needs consider using the simpler <see cref="SfvParser"/>.
+    /// </summary>
+    internal static class Rfc8941Parser
     {
         private static readonly object True = true;
 
-        public static ParseError? ParseField(ReadOnlySpan<char> source, FieldType fieldType, ref int index, out object result)
+        public static ParseError? ParseItemField(ReadOnlySpan<char> source, ref int index, out ParsedItem result)
         {
-            CheckIndex(index);
-            index = SkipSP(source, index);
+            index = BeginParse(source, index);
+            if (ParseItem(source, ref index, out result) is { } error)
+            {
+                return error;
+            }
+
+            if (EndParse(source, ref index) is { } endError)
+            {
+                result = default;
+                return endError;
+            }
+
+            return null;
+        }
+
+        public static ParseError? ParseListField(ReadOnlySpan<char> source, ref int index, out IReadOnlyList<ParsedItem> result)
+        {
+            index = BeginParse(source, index);
+            if (ParseList(source, ref index, out result) is { } error)
+            {
+                return error;
+            }
+
+            if (EndParse(source, ref index) is { } endError)
+            {
+                result = CommonValues.Empty;
+                return endError;
+            }
+
+            return null;
+        }
+
+        public static ParseError? ParseDictionaryField(ReadOnlySpan<char> source, ref int index, out IReadOnlyDictionary<string, ParsedItem> result)
+        {
+            index = BeginParse(source, index);
+            if (ParseDictionary(source, ref index, out result) is { } error)
+            {
+                return error;
+            }
+
+            if (EndParse(source, ref index) is { } endError)
+            {
+                result = CommonValues.EmptyDictionary;
+                return endError;
+            }
+
+            return null;
+        }
+
+        public static ParseError? ParseField(FieldType fieldType, ReadOnlySpan<char> source, ref int index, out object result)
+        {
+            index = BeginParse(source, index);
             ParseError? error;
             switch (fieldType)
             {
@@ -40,8 +93,7 @@ namespace StructuredFieldValues
                 return error;
             }
 
-            index = SkipSP(source, index);
-            if (index != source.Length)
+            if (EndParse(source, ref index) is { } endError)
             {
                 switch (fieldType)
                 {
@@ -58,7 +110,7 @@ namespace StructuredFieldValues
                         throw new ArgumentOutOfRangeException(nameof(fieldType), fieldType, "Unsupported fallback field type.");
                 }
 
-                return new(index, "extra trailing whitespace");
+                return endError;
             }
 
             return null;
@@ -69,7 +121,7 @@ namespace StructuredFieldValues
             CheckIndex(index);
             if (index == source.Length)
             {
-                result = default(ParsedItem).Item;
+                result = default(ParsedItem).Value;
                 return new(index, "empty bare item");
             }
 
@@ -875,7 +927,13 @@ namespace StructuredFieldValues
             return null;
         }
 
-        public static ParseError? ParseField(string source, FieldType fieldType, ref int index, out object result) => ParseField(source.AsSpan(), fieldType, ref index, out result);
+        public static ParseError? ParseItemField(string source, ref int index, out ParsedItem result) => ParseItemField(source.AsSpan(), ref index, out result);
+
+        public static ParseError? ParseListField(string source, ref int index, out IReadOnlyList<ParsedItem> result) => ParseListField(source.AsSpan(), ref index, out result);
+
+        public static ParseError? ParseDictionaryField(string source, ref int index, out IReadOnlyDictionary<string, ParsedItem> result) => ParseDictionaryField(source.AsSpan(), ref index, out result);
+
+        public static ParseError? ParseField(FieldType fieldType, string source, ref int index, out object result) => ParseField(fieldType, source.AsSpan(), ref index, out result);
 
         public static ParseError? ParseBareItem(string source, ref int index, out object result) => ParseBareItem(source.AsSpan(), ref index, out result);
 
@@ -930,6 +988,18 @@ namespace StructuredFieldValues
             {
                 throw new ArgumentOutOfRangeException(nameof(index), "Negative index.");
             }
+        }
+
+        private static int BeginParse(ReadOnlySpan<char> source, int index)
+        {
+            CheckIndex(index);
+            return SkipSP(source, index);
+        }
+
+        private static ParseError? EndParse(ReadOnlySpan<char> source, ref int index)
+        {
+            index = SkipSP(source, index);
+            return index == source.Length ? null : new(index, "extra trailing whitespace");
         }
     }
 }
