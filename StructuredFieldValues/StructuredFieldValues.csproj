@@ -5,10 +5,24 @@
     <TargetFrameworks>$(LibraryTargetFramework);$(ApplicationTargetFramework)</TargetFrameworks>
     <Nullable>enable</Nullable>
     <Version>0.3</Version>
+    <Description>A parser for RFC 8941 Structured Field Values for HTTP.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.4" />
+  </ItemGroup>
+
+  <PropertyGroup Label="NuSpec">
+    <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/drivenet/StructuredFieldValues</RepositoryUrl>
+    <PackageTags>rfc8941;parser;structured field values;http headers</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup Label="NuSpec">
+    <None Include="..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="..\icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup Label="TestInternalsVisibleTo">
