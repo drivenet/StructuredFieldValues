@@ -35,14 +35,38 @@ namespace StructuredFieldValues
                     throw new ArgumentOutOfRangeException(nameof(fieldType), fieldType, "Unsupported field type.");
             }
 
-            return error;
+            if (error is object)
+            {
+                return error;
+            }
+
+            index = SkipSP(source, index);
+            if (index != source.Length)
+            {
+                switch (fieldType)
+                {
+                    case FieldType.Item:
+                    case FieldType.List:
+                        result = CommonValues.Empty;
+                        break;
+
+                    case FieldType.Dictionary:
+                        result = CommonValues.EmptyDictionary;
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(fieldType), fieldType, "Unsupported fallback field type.");
+                }
+
+                return new(index, "extra trailing whitespace");
+            }
+
+            return null;
         }
 
         public static ParseError? ParseBareItem(ReadOnlySpan<char> source, ref int index, out object result)
         {
             CheckIndex(index);
-            index = SkipSP(source, index);
-
             if (index == source.Length)
             {
                 result = default(ParsedItem).Item;
@@ -320,6 +344,7 @@ namespace StructuredFieldValues
             List<ParsedItem>? buffer = null;
             while (localIndex != spanLength)
             {
+                var startIndex = localIndex;
                 localIndex = SkipSP(source, localIndex);
                 if (source[localIndex] == ')')
                 {
@@ -334,6 +359,12 @@ namespace StructuredFieldValues
                     index = localIndex;
                     result = new(buffer, listParameters);
                     return null;
+                }
+                else if (localIndex == startIndex && buffer is object)
+                {
+                    index = localIndex;
+                    result = default;
+                    return new(index, "missing space separator");
                 }
 
                 if (ParseItem(source, ref localIndex, out var item) is { } itemError)
@@ -723,7 +754,7 @@ namespace StructuredFieldValues
                         return null;
 
                     default:
-                        if (character is < (char)0x1F or > (char)0x7F)
+                        if (character is <= (char)0x1F or >= (char)0x7F)
                         {
                             index = localIndex;
                             result = "";

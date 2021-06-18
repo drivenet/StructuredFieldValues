@@ -317,6 +317,7 @@ namespace StructuredFieldValues.Tests
         }
 
         [Theory]
+        [InlineData(" (abc\"def\"?0123*dXZ3*xyz)", 1, 5)]
         [InlineData("", 0, 0)]
         [InlineData("  ", 1, 1)]
         [InlineData(" (", 1, 2)]
