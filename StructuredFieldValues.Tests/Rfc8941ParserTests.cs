@@ -7,6 +7,8 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+using Wiry.Base32;
+
 using Xunit;
 using Xunit.Sdk;
 
@@ -470,7 +472,7 @@ namespace StructuredFieldValues.Tests
             static object ConvertValue(object value) => value switch
             {
                 Token token => new JObject { ["__type"] = "token", ["value"] = token.ToString() },
-                byte[] binary => new JObject { ["__type"] = "binary", ["value"] = StringEncoder.ToBase32String(binary) },
+                ReadOnlyMemory<byte> binary => new JObject { ["__type"] = "binary", ["value"] = Base32Encoding.Standard.GetString(binary.ToArray()) },
                 IReadOnlyList<ParsedItem> list => ConvertList(list),
                 object other => other,
             };
