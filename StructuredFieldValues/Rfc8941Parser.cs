@@ -573,7 +573,9 @@ namespace StructuredFieldValues
             }
         }
 
+#pragma warning disable CA1502 // Parser code
         public static ParseError? ParseNumber(ReadOnlySpan<char> source, ref int index, out object result)
+#pragma warning restore CA1502
         {
             CheckIndex(index);
             var spanLength = source.Length;
