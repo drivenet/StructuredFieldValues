@@ -13,6 +13,8 @@ namespace StructuredFieldValues
             _value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
+        public static implicit operator string(Token token) => token._value;
+
         public static bool operator ==(Token? left, Token? right) => left is object ? left.Equals(right) : right is null;
 
         public static bool operator !=(Token? left, Token? right) => !(left == right);
