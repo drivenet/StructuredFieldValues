@@ -697,7 +697,7 @@ namespace StructuredFieldValues
             }
             else
             {
-                var slice = source.Slice(initialIndex, index - initialIndex);
+                var slice = source.Slice(initialIndex, localIndex - initialIndex);
 #if NET5_0_OR_GREATER
                 if (!double.TryParse(slice, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var parsed))
 #else
