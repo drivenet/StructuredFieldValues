@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
     <Version>0.4.1</Version>
     <Description>A parser for RFC 8941 Structured Field Values for HTTP.</Description>
-    <Platforms>x64;AnyCPU</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

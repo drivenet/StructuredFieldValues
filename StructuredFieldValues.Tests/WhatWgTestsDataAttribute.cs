@@ -21,7 +21,7 @@ namespace StructuredFieldValues.Tests
         public string FileNameOrMask { get; }
 
         public override IEnumerable<object[]> GetData(MethodInfo testMethod)
-            => Directory.EnumerateFiles("../../../../httpwg", FileNameOrMask).SelectMany(GetData);
+            => Directory.EnumerateFiles("../../../httpwg", FileNameOrMask).SelectMany(GetData);
 
         private static IEnumerable<object[]> GetData(string fileName)
         {
