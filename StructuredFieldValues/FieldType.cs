@@ -1,9 +1,8 @@
-﻿namespace StructuredFieldValues
+﻿namespace StructuredFieldValues;
+
+internal enum FieldType
 {
-    internal enum FieldType
-    {
-        Item,
-        List,
-        Dictionary,
-    }
+    Item,
+    List,
+    Dictionary,
 }

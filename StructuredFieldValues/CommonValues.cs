@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace StructuredFieldValues
+namespace StructuredFieldValues;
+
+internal static class CommonValues
 {
-    internal static class CommonValues
-    {
-        public static readonly IReadOnlyList<ParsedItem> Empty = Array.Empty<ParsedItem>();
-        public static readonly IReadOnlyDictionary<string, ParsedItem> EmptyDictionary = new Dictionary<string, ParsedItem>();
-        public static readonly IReadOnlyDictionary<string, object> EmptyParameters = new Dictionary<string, object>();
-        public static readonly DictionaryEqualityComparer<string, object> ParametersComparer = new();
-    }
+    public static readonly IReadOnlyList<ParsedItem> Empty = Array.Empty<ParsedItem>();
+    public static readonly IReadOnlyDictionary<string, ParsedItem> EmptyDictionary = new Dictionary<string, ParsedItem>();
+    public static readonly IReadOnlyDictionary<string, object> EmptyParameters = new Dictionary<string, object>();
+    public static readonly DictionaryEqualityComparer<string, object> ParametersComparer = new();
 }
