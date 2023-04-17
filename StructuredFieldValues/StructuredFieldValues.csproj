@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibraryTargetFramework);$(ApplicationTargetFramework)</TargetFrameworks>
     <Nullable>enable</Nullable>
-    <Version>0.5.2</Version>
+    <Version>0.5.3</Version>
     <Description>A parser for RFC 8941 Structured Field Values for HTTP.</Description>
   </PropertyGroup>
 
