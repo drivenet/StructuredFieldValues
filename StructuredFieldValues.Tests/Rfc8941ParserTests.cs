@@ -261,7 +261,10 @@ public class Rfc8941ParserTests
     {
         var parsedValue = JsonConvert.DeserializeObject<Dictionary<string, object>>(value);
         Assert.Null(Rfc8941Parser.ParseParameters(data, ref index, out var result));
-        Assert.Equal(result, parsedValue); // Exchanged expected and actual to fix string.Equals(Token) != Token.Equals(string) issue
+
+        // This conversion is needed because of the way the xUnit equality comparer works
+        var resultValue = result.Select(p => KeyValuePair.Create(p.Key, p.Value is Token token ? token.ToString() : p.Value));
+        Assert.Equal(parsedValue, resultValue); 
         Assert.Equal(lastIndex, index);
     }
 
