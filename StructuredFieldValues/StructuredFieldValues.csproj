@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(LibraryTargetFramework);$(ApplicationTargetFramework)</TargetFrameworks>
     <Nullable>enable</Nullable>
-    <Version>0.5.3</Version>
+    <Version>0.6.1</Version>
     <Description>A parser for RFC 8941 Structured Field Values for HTTP.</Description>
   </PropertyGroup>
 
@@ -26,11 +26,7 @@
   </ItemGroup>
 
   <ItemGroup Label="TestInternalsVisibleTo">
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-        <_Parameter1>$(AssemblyName).Tests</_Parameter1>
-    </AssemblyAttribute>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-        <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
-    </AssemblyAttribute>
+    <InternalsVisibleTo Include="$(AssemblyName).Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 </Project>
