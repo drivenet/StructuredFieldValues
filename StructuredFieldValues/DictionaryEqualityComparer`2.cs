@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace StructuredFieldValues;
 
 internal sealed class DictionaryEqualityComparer<TKey, TValue> : IEqualityComparer<IReadOnlyDictionary<TKey, TValue>>
+    where TKey : notnull
 {
     public bool Equals(IReadOnlyDictionary<TKey, TValue>? x, IReadOnlyDictionary<TKey, TValue>? y)
     {
@@ -45,5 +45,44 @@ internal sealed class DictionaryEqualityComparer<TKey, TValue> : IEqualityCompar
         return true;
     }
 
-    public int GetHashCode(IReadOnlyDictionary<TKey, TValue>? obj) => obj?.FirstOrDefault().GetHashCode() ?? -1;
+    public int GetHashCode(IReadOnlyDictionary<TKey, TValue> obj)
+    {
+        var count = obj.Count;
+        if (count == 0)
+        {
+            return 0;
+        }
+
+        var minKeyHash = int.MaxValue;
+        var maxKeyHash = int.MinValue;
+        var minValueHash = int.MaxValue;
+        var maxValueHash = int.MinValue;
+        foreach (var pair in obj)
+        {
+            var keyHash = pair.Key.GetHashCode();
+            if (keyHash < minKeyHash)
+            {
+                minKeyHash = keyHash;
+            }
+            else if (keyHash > maxKeyHash)
+            {
+                maxKeyHash = keyHash;
+            }
+
+            if (pair.Value is { } value)
+            {
+                var valueHash = value.GetHashCode();
+                if (valueHash < minValueHash)
+                {
+                    minValueHash = valueHash;
+                }
+                else if (keyHash > maxValueHash)
+                {
+                    maxValueHash = valueHash;
+                }
+            }
+        }
+
+        return (minKeyHash, maxKeyHash, minValueHash, maxValueHash, -count).GetHashCode();
+    }
 }
