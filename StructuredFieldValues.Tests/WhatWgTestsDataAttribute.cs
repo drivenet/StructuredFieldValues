@@ -25,6 +25,7 @@ public sealed class WhatWgTestsDataAttribute : DataAttribute
 
     private static IEnumerable<object[]> GetData(string fileName)
     {
+        var groupName = Path.GetFileNameWithoutExtension(fileName);
         JArray items;
         using (var file = File.OpenText(fileName))
         {
@@ -32,7 +33,6 @@ public sealed class WhatWgTestsDataAttribute : DataAttribute
             items = (JArray)JToken.ReadFrom(reader);
         }
 
-        fileName = Path.GetFileNameWithoutExtension(fileName);
         foreach (var item in items)
         {
             if (item is null)
@@ -54,7 +54,7 @@ public sealed class WhatWgTestsDataAttribute : DataAttribute
             var expected = item["expected"];
             var canFail = item.Value<bool>("can_fail");
 
-            var testCase = new WhatWgTestCase(fileName, name, headerType, header, expected, mustFail, canFail);
+            var testCase = new WhatWgTestCase(groupName, name, headerType, header, expected, mustFail, canFail);
             yield return new object[] { testCase };
         }
     }

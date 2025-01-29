@@ -6,10 +6,13 @@ namespace StructuredFieldValues.Tests;
 
 internal sealed class WhatWgTestCase
 {
-    public WhatWgTestCase(string fileName, string name, FieldType headerType, string header, JToken? expected, bool mustFail, bool canFail)
+    private readonly string _groupName;
+    private readonly string _name;
+
+    public WhatWgTestCase(string groupName, string name, FieldType headerType, string header, JToken? expected, bool mustFail, bool canFail)
     {
-        FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
-        Name = name ?? throw new ArgumentNullException(nameof(name));
+        _groupName = groupName ?? throw new ArgumentNullException(nameof(groupName));
+        _name = name ?? throw new ArgumentNullException(nameof(name));
         HeaderType = headerType;
         Header = header ?? throw new ArgumentNullException(nameof(header));
         Expected = expected;
@@ -27,9 +30,5 @@ internal sealed class WhatWgTestCase
 
     public bool CanFail { get; }
 
-    private string FileName { get; }
-
-    private string Name { get; }
-
-    public override string ToString() => $"\"{Name}\" in \"{FileName}\"";
+    public override string ToString() => $"\"{_name}\" in \"{_groupName}\"";
 }
