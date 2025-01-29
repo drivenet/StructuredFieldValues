@@ -88,7 +88,7 @@ internal static class Rfc8941Parser
                 throw new ArgumentOutOfRangeException(nameof(fieldType), fieldType, "Unsupported field type.");
         }
 
-        if (error is object)
+        if (error is not null)
         {
             return error;
         }
@@ -405,7 +405,7 @@ internal static class Rfc8941Parser
                 result = new(buffer, listParameters);
                 return null;
             }
-            else if (localIndex == startIndex && buffer is object)
+            else if (localIndex == startIndex && buffer is not null)
             {
                 index = localIndex;
                 result = default;
@@ -789,7 +789,7 @@ internal static class Rfc8941Parser
                     break;
 
                 case '"':
-                    if (buffer is object)
+                    if (buffer is not null)
                     {
                         result = buffer.ToString();
                     }

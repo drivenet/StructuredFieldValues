@@ -400,7 +400,7 @@ public class Rfc8941ParserTests
         {
             if (testCase.CanFail)
             {
-                if (error is object)
+                if (error is not null)
                 {
                     return;
                 }
