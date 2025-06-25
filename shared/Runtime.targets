@@ -1,5 +1,10 @@
 <Project>
-  <PropertyGroup Label="NetCoreProjectSettings" Condition="'$(TargetFramework)' == '$(ApplicationTargetFramework)'">
+  <PropertyGroup Label="NetCoreProjectSettings" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'netcoreapp3.1'))">
     <NoWarn>$(NoWarn);CA2007</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="ExeOutputSettings" Condition="'$(OutputType)' == 'Exe'">
+    <PublishDocumentationFiles>false</PublishDocumentationFiles>
+    <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
   </PropertyGroup>
 </Project>
