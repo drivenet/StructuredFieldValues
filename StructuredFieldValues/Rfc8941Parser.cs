@@ -1236,6 +1236,8 @@ internal static class Rfc8941Parser
 
     public static ParseError? ParseBoolean(string source, ref int index, out bool result) => ParseBoolean(source.AsSpan(), ref index, out result);
 
+    public static ParseError? ParseDate(string source, ref int index, out DateTime result) => ParseDate(source.AsSpan(), ref index, out result);
+
     public static ParseError? ParseNumber(string source, ref int index, out object result) => ParseNumber(source.AsSpan(), ref index, out result);
 
     public static ParseError? ParseString(string source, ref int index, out string result) => ParseString(source.AsSpan(), ref index, out result);
