@@ -824,7 +824,7 @@ internal static class Rfc8941Parser
                     return null;
 
                 default:
-                    if (character is <= (char)0x1F or >= (char)0x7F)
+                    if ((int)character is not (>= 0x20 and <= 0x7E))
                     {
                         index = localIndex;
                         result = "";
