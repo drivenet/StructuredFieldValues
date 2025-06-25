@@ -43,7 +43,7 @@ public sealed class WhatWgTestsDataAttribute : DataAttribute
             var name = item.Value<string>("name") ?? throw new InvalidDataException($"Missing name for test in \"{fileName}\".");
             var raw = (item.Value<JArray>("raw") ?? throw new InvalidDataException($"Missing raw value for test \"{name}\" in \"{fileName}\"."))
                 .Select(t => t.Value<string>() ?? throw new InvalidDataException($"Null raw value for test \"{name}\" in \"{fileName}\"."));
-            var header = string.Join(",", raw);
+            var header = string.Join(", ", raw);
             var headerTypeString = item.Value<string>("header_type") ?? throw new InvalidDataException($"Missing header type for test in \"{fileName}\".");
             if (!Enum.TryParse<FieldType>(headerTypeString, true, out var headerType))
             {
