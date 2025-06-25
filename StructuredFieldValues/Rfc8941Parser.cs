@@ -143,118 +143,32 @@ internal static class Rfc8941Parser
             case '7':
             case '8':
             case '9':
-                {
-                    if (ParseNumber(source, ref index, out var parsed) is not { } error)
-                    {
-                        result = parsed;
-                        return null;
-                    }
-                    else
-                    {
-                        result = CommonValues.Empty;
-                        return error;
-                    }
-                }
+                return ParseNumberInner(source, ref index, out result);
 
             case '"':
-                {
-                    if (ParseString(source, ref index, out var parsed) is not { } error)
-                    {
-                        result = parsed;
-                        return null;
-                    }
-                    else
-                    {
-                        result = CommonValues.Empty;
-                        return error;
-                    }
-                }
+                return ParseStringInner(source, ref index, out result);
 
             case '%':
-                {
-                    if (ParseDisplayString(source, ref index, out var parsed) is not { } error)
-                    {
-                        result = parsed;
-                        return null;
-                    }
-                    else
-                    {
-                        result = CommonValues.Empty;
-                        return error;
-                    }
-                }
+                return ParseDisplayStringInner(source, ref index, out result);
 
             case '*':
-                {
-                    if (ParseToken(source, ref index, out var parsed) is not { } error)
-                    {
-                        result = parsed;
-                        return null;
-                    }
-                    else
-                    {
-                        result = CommonValues.Empty;
-                        return error;
-                    }
-                }
+                return ParseTokenInner(source, ref index, out result);
 
             case ':':
-                {
-                    if (ParseByteSequence(source, ref index, out var parsed) is not { } error)
-                    {
-                        result = parsed;
-                        return null;
-                    }
-                    else
-                    {
-                        result = CommonValues.Empty;
-                        return error;
-                    }
-                }
+                return ParseByteSequenceInner(source, ref index, out result);
 
             case '?':
-                {
-                    if (ParseBoolean(source, ref index, out var parsed) is not { } error)
-                    {
-                        result = parsed;
-                        return null;
-                    }
-                    else
-                    {
-                        result = CommonValues.Empty;
-                        return error;
-                    }
-                }
+                return ParseBooleanInner(source, ref index, out result);
 
             case '@':
-                {
-                    if (ParseDate(source, ref index, out var parsed) is not { } error)
-                    {
-                        result = parsed;
-                        return null;
-                    }
-                    else
-                    {
-                        result = CommonValues.Empty;
-                        return error;
-                    }
-                }
+                return ParseDateInner(source, ref index, out result);
 
             default:
                 {
                     // Rare case for Tokens, placing all these cases in switch would be inconvenient
                     if (discriminator is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z'))
                     {
-                        if (ParseToken(source, ref index, out var parsed) is not { } error)
-                        {
-                            result = parsed;
-                            return null;
-                        }
-                        else
-                        {
-                            result = CommonValues.Empty;
-                            return error;
-                        }
+                        return ParseTokenInner(source, ref index, out result);
                     }
 
                     result = CommonValues.Empty;
@@ -1247,6 +1161,104 @@ internal static class Rfc8941Parser
     public static ParseError? ParseToken(string source, ref int index, out Token result) => ParseToken(source.AsSpan(), ref index, out result);
 
     public static ParseError? ParseByteSequence(string source, ref int index, out ReadOnlyMemory<byte> result) => ParseByteSequence(source.AsSpan(), ref index, out result);
+
+    private static ParseError? ParseDateInner(ReadOnlySpan<char> source, ref int index, out object result)
+    {
+        if (ParseDate(source, ref index, out var parsed) is not { } error)
+        {
+            result = parsed;
+            return null;
+        }
+        else
+        {
+            result = CommonValues.Empty;
+            return error;
+        }
+    }
+
+    private static ParseError? ParseBooleanInner(ReadOnlySpan<char> source, ref int index, out object result)
+    {
+        if (ParseBoolean(source, ref index, out var parsed) is not { } error)
+        {
+            result = parsed;
+            return null;
+        }
+        else
+        {
+            result = CommonValues.Empty;
+            return error;
+        }
+    }
+
+    private static ParseError? ParseByteSequenceInner(ReadOnlySpan<char> source, ref int index, out object result)
+    {
+        if (ParseByteSequence(source, ref index, out var parsed) is not { } error)
+        {
+            result = parsed;
+            return null;
+        }
+        else
+        {
+            result = CommonValues.Empty;
+            return error;
+        }
+    }
+
+    private static ParseError? ParseTokenInner(ReadOnlySpan<char> source, ref int index, out object result)
+    {
+        if (ParseToken(source, ref index, out var parsed) is not { } error)
+        {
+            result = parsed;
+            return null;
+        }
+        else
+        {
+            result = CommonValues.Empty;
+            return error;
+        }
+    }
+
+    private static ParseError? ParseDisplayStringInner(ReadOnlySpan<char> source, ref int index, out object result)
+    {
+        if (ParseDisplayString(source, ref index, out var parsed) is not { } error)
+        {
+            result = parsed;
+            return null;
+        }
+        else
+        {
+            result = CommonValues.Empty;
+            return error;
+        }
+    }
+
+    private static ParseError? ParseStringInner(ReadOnlySpan<char> source, ref int index, out object result)
+    {
+        if (ParseString(source, ref index, out var parsed) is not { } error)
+        {
+            result = parsed;
+            return null;
+        }
+        else
+        {
+            result = CommonValues.Empty;
+            return error;
+        }
+    }
+
+    private static ParseError? ParseNumberInner(ReadOnlySpan<char> source, ref int index, out object result)
+    {
+        if (ParseNumber(source, ref index, out var parsed) is not { } error)
+        {
+            result = parsed;
+            return null;
+        }
+        else
+        {
+            result = CommonValues.Empty;
+            return error;
+        }
+    }
 
     private static int DecodeNybble(char character)
     {
