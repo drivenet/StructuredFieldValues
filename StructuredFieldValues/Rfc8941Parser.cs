@@ -11,6 +11,7 @@ namespace StructuredFieldValues;
 /// </summary>
 internal static class Rfc8941Parser
 {
+    private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     private static readonly UTF8Encoding UTF8Encoding = new(false, true);
 
     private static readonly object True = true;
@@ -214,6 +215,20 @@ internal static class Rfc8941Parser
             case '?':
                 {
                     if (ParseBoolean(source, ref index, out var parsed) is not { } error)
+                    {
+                        result = parsed;
+                        return null;
+                    }
+                    else
+                    {
+                        result = CommonValues.Empty;
+                        return error;
+                    }
+                }
+
+            case '@':
+                {
+                    if (ParseDate(source, ref index, out var parsed) is not { } error)
                     {
                         result = parsed;
                         return null;
@@ -588,6 +603,102 @@ internal static class Rfc8941Parser
                 result = default;
                 return new(index, "unexpected boolean value");
         }
+    }
+
+    public static ParseError? ParseDate(ReadOnlySpan<char> source, ref int index, out DateTime result)
+    {
+        CheckIndex(index);
+        var spanLength = source.Length;
+        if (spanLength - index < 1)
+        {
+            result = default;
+            return new(index, "insufficient characters for date");
+        }
+
+        var character = source[index];
+        if (character != '@')
+        {
+            result = default;
+            return new(index, "invalid leading date character");
+        }
+
+        ++index;
+
+        if (spanLength - index < 1)
+        {
+            result = default;
+            return new(index, "insufficient characters for date value");
+        }
+
+        var isNegative = source[index] == '-';
+        if (isNegative)
+        {
+            ++index;
+        }
+
+        var initialIndex = index;
+        var localIndex = initialIndex;
+        while (localIndex != spanLength)
+        {
+            character = source[localIndex];
+            var earlyBreak = false;
+            var length = localIndex - initialIndex;
+            switch (character)
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    break;
+
+                default:
+                    earlyBreak = true;
+                    break;
+            }
+
+            if (earlyBreak)
+            {
+                break;
+            }
+
+            ++length;
+            if (length > 15)
+            {
+                index = localIndex;
+                result = default;
+                return new(localIndex, "date is too long ({0})", length);
+            }
+
+            ++localIndex;
+        }
+
+        index = localIndex;
+        if (index == initialIndex)
+        {
+            result = default;
+            return new(index, "insufficient digits for date");
+        }
+
+        var parsed = 0L;
+        for (var i = initialIndex; i < localIndex; i++)
+        {
+            parsed *= 10;
+            parsed += source[i] - '0';
+        }
+
+        if (isNegative)
+        {
+            parsed = -parsed;
+        }
+
+        result = Epoch.AddSeconds(parsed);
+        return null;
     }
 
 #pragma warning disable CA1502 // Parser code

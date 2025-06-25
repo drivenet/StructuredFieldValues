@@ -16,6 +16,8 @@ namespace StructuredFieldValues.Tests;
 
 public class Rfc8941ParserTests
 {
+    private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
     [Theory]
     [InlineData("?0", 0, false, 2)]
     [InlineData("?1", 0, true, 2)]
@@ -467,6 +469,7 @@ public class Rfc8941ParserTests
             DisplayString token => new JObject { ["__type"] = "displaystring", ["value"] = token.ToString() },
             ReadOnlyMemory<byte> binary => new JObject { ["__type"] = "binary", ["value"] = Base32Encoding.Standard.GetString(binary.ToArray()) },
             IReadOnlyList<ParsedItem> list => ConvertList(list),
+            DateTime date => new JObject { ["__type"] = "date", ["value"] = (long)Math.Ceiling((date.ToUniversalTime() - Epoch).TotalSeconds) },
             object other => other,
         };
 
