@@ -13,7 +13,7 @@ public sealed class Token : IEquatable<Token>, IEquatable<string>
         _value = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public static implicit operator string(Token token) => token._value;
+    public static implicit operator string(Token value) => value._value;
 
     public static bool operator ==(Token? left, Token? right) => left is not null ? left.Equals(right) : right is null;
 
