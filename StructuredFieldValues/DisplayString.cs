@@ -35,7 +35,7 @@ public sealed class DisplayString : IEquatable<DisplayString>, IEquatable<string
 
     public bool Equals(DisplayString? other) => other is not null && _value == other._value;
 
-    public bool Equals(string? other) => _value.Equals(other, StringComparison.Ordinal);
+    public bool Equals(string? other) => _value == other;
 
     public override bool Equals(object? obj) => obj switch
     {
