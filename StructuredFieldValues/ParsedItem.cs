@@ -12,6 +12,7 @@ namespace StructuredFieldValues;
 ///     <see cref="long"/> (Integer),
 ///     <see cref="double"/> (Decimal),
 ///     <see cref="string"/> (String),
+///     <see cref="DisplayString"/> (DisplayString),
 ///     <see cref="Token"/> (Token),
 ///     <see cref="ReadOnlyMemory{byte}"/> (Byte sequence).</remarks>
 public readonly struct ParsedItem : IEquatable<ParsedItem>

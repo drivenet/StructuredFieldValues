@@ -464,6 +464,7 @@ public class Rfc8941ParserTests
         static object ConvertValue(object value) => value switch
         {
             Token token => new JObject { ["__type"] = "token", ["value"] = token.ToString() },
+            DisplayString token => new JObject { ["__type"] = "displaystring", ["value"] = token.ToString() },
             ReadOnlyMemory<byte> binary => new JObject { ["__type"] = "binary", ["value"] = Base32Encoding.Standard.GetString(binary.ToArray()) },
             IReadOnlyList<ParsedItem> list => ConvertList(list),
             object other => other,

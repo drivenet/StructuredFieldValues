@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -10,6 +11,8 @@ namespace StructuredFieldValues;
 /// </summary>
 internal static class Rfc8941Parser
 {
+    private static readonly UTF8Encoding UTF8Encoding = new(false, true);
+
     private static readonly object True = true;
 
     public static ParseError? ParseItemField(ReadOnlySpan<char> source, ref int index, out ParsedItem result)
@@ -155,6 +158,20 @@ internal static class Rfc8941Parser
             case '"':
                 {
                     if (ParseString(source, ref index, out var parsed) is not { } error)
+                    {
+                        result = parsed;
+                        return null;
+                    }
+                    else
+                    {
+                        result = CommonValues.Empty;
+                        return error;
+                    }
+                }
+
+            case '%':
+                {
+                    if (ParseDisplayString(source, ref index, out var parsed) is not { } error)
                     {
                         result = parsed;
                         return null;
@@ -826,6 +843,159 @@ internal static class Rfc8941Parser
         return new(localIndex, "missing closing double quote");
     }
 
+    public static ParseError? ParseDisplayString(ReadOnlySpan<char> source, ref int index, out DisplayString result)
+    {
+        CheckIndex(index);
+        var spanLength = source.Length;
+        if (spanLength - index < 1)
+        {
+            result = DisplayString.Empty;
+            return new(index, "insufficient characters for display string");
+        }
+
+        var character = source[index];
+        if (character != '%')
+        {
+            result = DisplayString.Empty;
+            return new(index, "invalid leading display string character");
+        }
+
+        ++index;
+
+        if (source[index] != '"')
+        {
+            result = DisplayString.Empty;
+            return new(index, "missing opening double quote");
+        }
+
+        ++index;
+
+        if (spanLength - index < 1)
+        {
+            result = DisplayString.Empty;
+            return new(index, "insufficient characters for display string value");
+        }
+
+        var initialIndex = index;
+        var localIndex = initialIndex;
+        byte[]? buffer = null;
+        var bufferLength = 0;
+        try
+        {
+            while (localIndex != spanLength)
+            {
+                character = source[localIndex];
+                switch (character)
+                {
+                    case '"':
+                        string resultValue;
+                        if (buffer is not null)
+                        {
+                            try
+                            {
+                                resultValue = UTF8Encoding.GetString(buffer, 0, bufferLength);
+                            }
+                            catch (DecoderFallbackException exception)
+                            {
+                                index = exception.Index;
+                                result = DisplayString.Empty;
+                                return new(exception.Index, "invalid UTF-8 encoding");
+                            }
+                        }
+                        else
+                        {
+                            var slice = source.Slice(initialIndex, localIndex - initialIndex);
+#if NET5_0_OR_GREATER
+                            resultValue = new(slice);
+#else
+                            resultValue = new(slice.ToArray());
+#endif
+                        }
+
+                        result = new(resultValue);
+                        index = localIndex + 1;
+                        return null;
+
+                    case '%':
+                        var pctIndex = localIndex++;
+                        if (localIndex == spanLength)
+                        {
+                            index = pctIndex;
+                            result = DisplayString.Empty;
+                            return new(localIndex, "missing encoded nybble 1");
+                        }
+
+                        var nybble1 = DecodeNybble(source[localIndex]);
+                        if (nybble1 < 0)
+                        {
+                            index = pctIndex;
+                            result = DisplayString.Empty;
+                            return new(localIndex, "invalid encoded nybble 1");
+                        }
+
+                        ++localIndex;
+                        if (localIndex == spanLength)
+                        {
+                            index = pctIndex;
+                            result = DisplayString.Empty;
+                            return new(localIndex, "missing encoded nybble 2");
+                        }
+
+                        var nybble2 = DecodeNybble(source[localIndex]);
+                        if (nybble2 < 0)
+                        {
+                            index = pctIndex;
+                            result = DisplayString.Empty;
+                            return new(localIndex, "invalid encoded nybble 2");
+                        }
+
+                        var value = unchecked((byte)((nybble1 << 4) | nybble2));
+                        if (buffer is null)
+                        {
+                            buffer = ArrayPool<byte>.Shared.Rent((spanLength - initialIndex) * 4);
+
+                            // At this time, only ASCII characters can be present in the array, so the conversion can be done without encoding
+                            for (var i = initialIndex; i < pctIndex; i++)
+                            {
+                                buffer[bufferLength++] = (byte)source[i];
+                            }
+                        }
+
+                        buffer[bufferLength++] = value;
+                        break;
+
+                    default:
+                        if ((int)character is not (>= 0x20 and <= 0x7E))
+                        {
+                            index = localIndex;
+                            result = DisplayString.Empty;
+                            return new(localIndex, "display string character is out of range");
+                        }
+
+                        if (buffer is not null)
+                        {
+                            buffer[bufferLength++] = unchecked((byte)character);
+                        }
+
+                        break;
+                }
+
+                ++localIndex;
+            }
+        }
+        finally
+        {
+            if (buffer is not null)
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        index = localIndex;
+        result = DisplayString.Empty;
+        return new(localIndex, "missing closing double quote");
+    }
+
     public static ParseError? ParseToken(ReadOnlySpan<char> source, ref int index, out Token result)
     {
         CheckIndex(index);
@@ -959,9 +1129,26 @@ internal static class Rfc8941Parser
 
     public static ParseError? ParseString(string source, ref int index, out string result) => ParseString(source.AsSpan(), ref index, out result);
 
+    public static ParseError? ParseDisplayString(string source, ref int index, out DisplayString result) => ParseDisplayString(source.AsSpan(), ref index, out result);
+
     public static ParseError? ParseToken(string source, ref int index, out Token result) => ParseToken(source.AsSpan(), ref index, out result);
 
     public static ParseError? ParseByteSequence(string source, ref int index, out ReadOnlyMemory<byte> result) => ParseByteSequence(source.AsSpan(), ref index, out result);
+
+    private static int DecodeNybble(char character)
+    {
+        if (character is >= '0' and <= '9')
+        {
+            return character - '0';
+        }
+
+        if (character is >= 'a' and <= 'f')
+        {
+            return character - 'a' + 10;
+        }
+
+        return -1;
+    }
 
     private static int SkipSP(ReadOnlySpan<char> source, int index)
     {
