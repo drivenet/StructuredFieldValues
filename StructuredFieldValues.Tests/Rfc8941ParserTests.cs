@@ -157,6 +157,22 @@ public class Rfc8941ParserTests
     }
 
     [Theory]
+    [InlineData("%\"\"", 0, "", 3)]
+    [InlineData("%\"!\"", 0, "!", 4)]
+    [InlineData("%\"abc def\"", 0, "abc def", 10)]
+    [InlineData("\"r0x%\"abc def\"", 4, "abc def", 14)]
+    [InlineData("%\"d34234efghi\"qwjeoiwqe", 0, "d34234efghi", 14)]
+    [InlineData("%\"abc\\\\ def\"", 0, "abc\\\\ def", 12)]
+    [InlineData("%\"quotes %2272893d%22 wejp18 \"", 0, "quotes \"72893d\" wejp18 ", 30)]
+    [InlineData("qwieu189xHH%\"d34234ghi\"qwjiwqe", 11, "d34234ghi", 23)]
+    public void ParseDisplayStringWorks(string data, int index, string value, int lastIndex)
+    {
+        Assert.Null(Rfc8941Parser.ParseDisplayString(data, ref index, out var result));
+        Assert.Equal(value, result);
+        Assert.Equal(lastIndex, index);
+    }
+
+    [Theory]
     [InlineData("", 0, 0)]
     [InlineData("\"", 0, 1)]
     [InlineData("a bc\"", 0, 0)]
