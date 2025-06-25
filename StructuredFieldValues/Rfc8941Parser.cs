@@ -1164,100 +1164,86 @@ internal static class Rfc8941Parser
 
     private static ParseError? ParseDateInner(ReadOnlySpan<char> source, ref int index, out object result)
     {
-        if (ParseDate(source, ref index, out var parsed) is not { } error)
-        {
-            result = parsed;
-            return null;
-        }
-        else
+        if (ParseDate(source, ref index, out var parsed) is { } error)
         {
             result = CommonValues.Empty;
             return error;
         }
+
+        result = parsed;
+        return null;
     }
 
     private static ParseError? ParseBooleanInner(ReadOnlySpan<char> source, ref int index, out object result)
     {
-        if (ParseBoolean(source, ref index, out var parsed) is not { } error)
-        {
-            result = parsed;
-            return null;
-        }
-        else
+        if (ParseBoolean(source, ref index, out var parsed) is { } error)
         {
             result = CommonValues.Empty;
             return error;
         }
+
+        result = parsed;
+        return null;
     }
 
     private static ParseError? ParseByteSequenceInner(ReadOnlySpan<char> source, ref int index, out object result)
     {
-        if (ParseByteSequence(source, ref index, out var parsed) is not { } error)
-        {
-            result = parsed;
-            return null;
-        }
-        else
+        if (ParseByteSequence(source, ref index, out var parsed) is { } error)
         {
             result = CommonValues.Empty;
             return error;
         }
+
+        result = parsed;
+        return null;
     }
 
     private static ParseError? ParseTokenInner(ReadOnlySpan<char> source, ref int index, out object result)
     {
-        if (ParseToken(source, ref index, out var parsed) is not { } error)
-        {
-            result = parsed;
-            return null;
-        }
-        else
+        if (ParseToken(source, ref index, out var parsed) is { } error)
         {
             result = CommonValues.Empty;
             return error;
         }
+
+        result = parsed;
+        return null;
     }
 
     private static ParseError? ParseDisplayStringInner(ReadOnlySpan<char> source, ref int index, out object result)
     {
-        if (ParseDisplayString(source, ref index, out var parsed) is not { } error)
-        {
-            result = parsed;
-            return null;
-        }
-        else
+        if (ParseDisplayString(source, ref index, out var parsed) is { } error)
         {
             result = CommonValues.Empty;
             return error;
         }
+
+        result = parsed;
+        return null;
     }
 
     private static ParseError? ParseStringInner(ReadOnlySpan<char> source, ref int index, out object result)
     {
-        if (ParseString(source, ref index, out var parsed) is not { } error)
-        {
-            result = parsed;
-            return null;
-        }
-        else
+        if (ParseString(source, ref index, out var parsed) is { } error)
         {
             result = CommonValues.Empty;
             return error;
         }
+
+        result = parsed;
+        return null;
     }
 
     private static ParseError? ParseNumberInner(ReadOnlySpan<char> source, ref int index, out object result)
     {
-        if (ParseNumber(source, ref index, out var parsed) is not { } error)
-        {
-            result = parsed;
-            return null;
-        }
-        else
+        if (ParseNumber(source, ref index, out var parsed) is { } error)
         {
             result = CommonValues.Empty;
             return error;
         }
+
+        result = parsed;
+        return null;
     }
 
     private static int DecodeNybble(char character)
