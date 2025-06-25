@@ -14,7 +14,7 @@ namespace StructuredFieldValues;
 ///     <see cref="string"/> (String),
 ///     <see cref="DisplayString"/> (DisplayString),
 ///     <see cref="Token"/> (Token),
-///     <see cref="ReadOnlyMemory{byte}"/> (Byte sequence).</remarks>
+///     <see cref="ReadOnlyMemory{T}"/> of <see cref="byte"/> (Byte sequence).</remarks>
 public readonly struct ParsedItem : IEquatable<ParsedItem>
 {
     private readonly object? _value;
