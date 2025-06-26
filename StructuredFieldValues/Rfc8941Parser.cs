@@ -11,7 +11,7 @@ namespace StructuredFieldValues;
 /// </summary>
 internal static class Rfc8941Parser
 {
-    private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     private static readonly UTF8Encoding UTF8Encoding = new(false, true);
 
     private static readonly object True = true;
