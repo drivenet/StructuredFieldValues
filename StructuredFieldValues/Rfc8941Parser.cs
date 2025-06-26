@@ -16,6 +16,9 @@ internal static class Rfc8941Parser
 
     private static readonly object True = true;
 
+    [ThreadStatic]
+    private static StringBuilder? _builderCache;
+
     public static ParseError? ParseItemField(ReadOnlySpan<char> source, ref int index, out ParsedItem result)
     {
         index = BeginParse(source, index);
@@ -789,78 +792,99 @@ internal static class Rfc8941Parser
         var initialIndex = index;
         var localIndex = initialIndex;
         StringBuilder? buffer = null;
-        while (localIndex != spanLength)
+        try
         {
-            var character = source[localIndex];
-            switch (character)
+            while (localIndex != spanLength)
             {
-                case '\\':
-                    ++localIndex;
-                    if (localIndex == spanLength)
-                    {
-                        index = localIndex;
-                        result = "";
-                        return new(localIndex, "missing escaped character");
-                    }
-
-                    character = source[localIndex];
-                    switch (character)
-                    {
-                        case '\\':
-                        case '"':
-                            if (buffer is null)
-                            {
-                                buffer = new StringBuilder(spanLength - 2);
-                                var slice = source.Slice(initialIndex, localIndex - initialIndex - 1);
-#if NET5_0_OR_GREATER
-                                buffer.Append(slice);
-#else
-                                buffer.Append(slice.ToArray());
-#endif
-                            }
-
-                            buffer.Append(character);
-                            break;
-
-                        default:
+                var character = source[localIndex];
+                switch (character)
+                {
+                    case '\\':
+                        ++localIndex;
+                        if (localIndex == spanLength)
+                        {
                             index = localIndex;
                             result = "";
-                            return new(localIndex, "invalid escaped character");
-                    }
+                            return new(localIndex, "missing escaped character");
+                        }
 
-                    break;
+                        character = source[localIndex];
+                        switch (character)
+                        {
+                            case '\\':
+                            case '"':
+                                if (buffer is null)
+                                {
+                                    var capacity = spanLength - 2;
+                                    if (_builderCache is not null)
+                                    {
+                                        buffer = _builderCache;
+                                        buffer.EnsureCapacity(capacity);
+                                    }
+                                    else
+                                    {
+                                        buffer = new(capacity);
+                                    }
 
-                case '"':
-                    if (buffer is not null)
-                    {
-                        result = buffer.ToString();
-                    }
-                    else
-                    {
-                        var slice = source.Slice(initialIndex, localIndex - initialIndex);
+                                    var slice = source.Slice(initialIndex, localIndex - initialIndex - 1);
 #if NET5_0_OR_GREATER
-                        result = new(slice);
+                                    buffer.Append(slice);
 #else
-                        result = new(slice.ToArray());
+                                    buffer.Append(slice.ToArray());
 #endif
-                    }
+                                }
 
-                    index = localIndex + 1;
-                    return null;
+                                buffer.Append(character);
+                                break;
 
-                default:
-                    if ((int)character is not (>= 0x20 and <= 0x7E))
-                    {
-                        index = localIndex;
-                        result = "";
-                        return new(localIndex, "string character is out of range");
-                    }
+                            default:
+                                index = localIndex;
+                                result = "";
+                                return new(localIndex, "invalid escaped character");
+                        }
 
-                    buffer?.Append(character);
-                    break;
+                        break;
+
+                    case '"':
+                        if (buffer is not null)
+                        {
+                            result = buffer.ToString();
+                        }
+                        else
+                        {
+                            var slice = source.Slice(initialIndex, localIndex - initialIndex);
+#if NET5_0_OR_GREATER
+                            result = new(slice);
+#else
+                            result = new(slice.ToArray());
+#endif
+                        }
+
+                        index = localIndex + 1;
+                        return null;
+
+                    default:
+                        if ((int)character is not (>= 0x20 and <= 0x7E))
+                        {
+                            index = localIndex;
+                            result = "";
+                            return new(localIndex, "string character is out of range");
+                        }
+
+                        buffer?.Append(character);
+                        break;
+                }
+
+                ++localIndex;
             }
-
-            ++localIndex;
+        }
+        finally
+        {
+            if (buffer is { Capacity: <= 42000 })
+            {
+                buffer.Clear();
+                _builderCache = buffer;
+            }
         }
 
         index = localIndex;
