@@ -313,13 +313,8 @@ internal static class Rfc8941Parser
     {
         CheckIndex(index);
         var spanLength = source.Length;
-        if (spanLength - index < 1)
-        {
-            result = default;
-            return new(index, "insufficient characters for inner list");
-        }
-
-        if (source[index] != '(')
+        if (spanLength - index < 1
+            || source[index] != '(')
         {
             result = default;
             return new(index, "missing opening parentheses");
@@ -769,16 +764,11 @@ internal static class Rfc8941Parser
     {
         CheckIndex(index);
         var spanLength = source.Length;
-        if (spanLength - index < 1)
+        if (spanLength - index < 1
+            || source[index] != '"')
         {
             result = "";
-            return new(index, "insufficient characters for string");
-        }
-
-        if (source[index] != '"')
-        {
-            result = "";
-            return new(index, "missing opening double quote");
+            return new(index, "missing opening double quote for string");
         }
 
         ++index;
@@ -896,25 +886,20 @@ internal static class Rfc8941Parser
     {
         CheckIndex(index);
         var spanLength = source.Length;
-        if (spanLength - index < 1)
+        if (spanLength - index < 1
+            || source[index] != '%')
         {
             result = DisplayString.Empty;
-            return new(index, "insufficient characters for display string");
-        }
-
-        var character = source[index];
-        if (character != '%')
-        {
-            result = DisplayString.Empty;
-            return new(index, "invalid leading display string character");
+            return new(index, "missing leading display string character");
         }
 
         ++index;
 
-        if (source[index] != '"')
+        if (spanLength - index < 1
+            || source[index] != '"')
         {
             result = DisplayString.Empty;
-            return new(index, "missing opening double quote");
+            return new(index, "missing opening double quote for display string");
         }
 
         ++index;
@@ -922,7 +907,7 @@ internal static class Rfc8941Parser
         if (spanLength - index < 1)
         {
             result = DisplayString.Empty;
-            return new(index, "insufficient characters for display string value");
+            return new(index, "missing display string value");
         }
 
         var initialIndex = index;
@@ -933,7 +918,7 @@ internal static class Rfc8941Parser
         {
             while (localIndex != spanLength)
             {
-                character = source[localIndex];
+                var character = source[localIndex];
                 switch (character)
                 {
                     case '"':
@@ -1092,16 +1077,11 @@ internal static class Rfc8941Parser
     {
         CheckIndex(index);
         var spanLength = source.Length;
-        if (spanLength - index < 2)
+        if (spanLength - index < 1
+            || source[index] != ':')
         {
             result = Array.Empty<byte>();
-            return new(index, "insufficient characters for byte sequence");
-        }
-
-        if (source[index] != ':')
-        {
-            result = Array.Empty<byte>();
-            return new(index, "invalid opening byte sequence character");
+            return new(index, "missing opening byte sequence character");
         }
 
         var initialIndex = ++index;
@@ -1109,7 +1089,7 @@ internal static class Rfc8941Parser
         var length = slice.IndexOf(':');
         if (length < 0)
         {
-            index += spanLength - 1;
+            index = spanLength;
             result = Array.Empty<byte>();
             return new(index, "missing closing byte sequence character");
         }

@@ -190,6 +190,16 @@ public class Rfc8941ParserTests
     }
 
     [Theory]
+    [InlineData("", 0, 0)]
+    [InlineData("%", 0, 1)]
+    [InlineData("%\"", 0, 2)]
+    public void ParseDisplayStringFailsCorrectly(string data, int index, int lastIndex)
+    {
+        Assert.NotNull(Rfc8941Parser.ParseDisplayString(data, ref index, out _));
+        Assert.Equal(lastIndex, index);
+    }
+
+    [Theory]
     [InlineData("key1", 0, "key1", 4)]
     [InlineData("keyZ1", 0, "key", 3)]
     [InlineData("TeST*key-super.value*star=0", 4, "*key-super.value*star", 25)]
