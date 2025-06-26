@@ -2,9 +2,9 @@
   <Import Project="..\shared\Minimal.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>$(LegacyTargetFramework);$(ApplicationTargetFramework)</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;$(LegacyTargetFramework);$(ApplicationTargetFramework)</TargetFrameworks>
     <Nullable>enable</Nullable>
-    <Version>0.7.3</Version>
+    <Version>0.7.4</Version>
     <Description>A parser for RFC 8941 Structured Field Values for HTTP.</Description>
   </PropertyGroup>
 
