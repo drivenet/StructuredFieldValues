@@ -946,9 +946,10 @@ internal static class Rfc8941Parser
                             }
                             catch (DecoderFallbackException exception)
                             {
-                                index = exception.Index;
+                                var adjustedIndex = exception.Index < 0 ? 0 : exception.Index;
+                                index = adjustedIndex;
                                 result = DisplayString.Empty;
-                                return new(exception.Index, "invalid UTF-8 encoding");
+                                return new(adjustedIndex, "invalid UTF-8 encoding");
                             }
                         }
                         else
