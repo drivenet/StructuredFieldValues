@@ -35,11 +35,6 @@ public sealed class WhatWgTestsDataAttribute : DataAttribute
 
         foreach (var item in items)
         {
-            if (item is null)
-            {
-                continue;
-            }
-
             var name = item.Value<string>("name") ?? throw new InvalidDataException($"Missing name for test in \"{fileName}\".");
             var raw = (item.Value<JArray>("raw") ?? throw new InvalidDataException($"Missing raw value for test \"{name}\" in \"{fileName}\"."))
                 .Select(t => t.Value<string>() ?? throw new InvalidDataException($"Null raw value for test \"{name}\" in \"{fileName}\"."));
