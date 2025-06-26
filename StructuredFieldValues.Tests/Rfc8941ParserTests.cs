@@ -281,8 +281,8 @@ public class Rfc8941ParserTests
         Assert.Null(Rfc8941Parser.ParseParameters(data, ref index, out var result));
 
         // This conversion is needed because of the way the xUnit equality comparer works
-        var resultValue = result.Select(p => KeyValuePair.Create(p.Key, p.Value is Token token ? token.ToString() : p.Value));
-        Assert.Equal(parsedValue, resultValue); 
+        var resultValue = result.Select(p => new KeyValuePair<string, object>(p.Key, p.Value is Token token ? token.ToString() : p.Value));
+        Assert.Equal(parsedValue, resultValue);
         Assert.Equal(lastIndex, index);
     }
 

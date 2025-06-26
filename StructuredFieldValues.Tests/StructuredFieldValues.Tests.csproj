@@ -2,7 +2,7 @@
   <Import Project="..\shared\MinimalTestLibrary.props" />
 
   <PropertyGroup>
-    <TargetFramework>$(ApplicationTargetFramework)</TargetFramework>
+    <TargetFrameworks>$(LegacyTargetFramework);$(ApplicationTargetFramework)</TargetFrameworks>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
