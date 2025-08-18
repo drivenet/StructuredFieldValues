@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,8 +8,6 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-using Wiry.Base32;
-
 using Xunit;
 using Xunit.Sdk;
 
@@ -16,6 +15,7 @@ namespace StructuredFieldValues.Tests;
 
 public class Rfc8941ParserTests
 {
+    private const string Base32StdEncodeMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     [Theory]
@@ -493,7 +493,7 @@ public class Rfc8941ParserTests
         {
             Token token => new JObject { ["__type"] = "token", ["value"] = token.ToString() },
             DisplayString token => new JObject { ["__type"] = "displaystring", ["value"] = token.ToString() },
-            ReadOnlyMemory<byte> binary => new JObject { ["__type"] = "binary", ["value"] = Base32Encoding.Standard.GetString(binary.ToArray()) },
+            ReadOnlyMemory<byte> binary => new JObject { ["__type"] = "binary", ["value"] = ToBase32StdString(binary.Span) },
             IReadOnlyList<ParsedItem> list => ConvertList(list),
             DateTime date => new JObject { ["__type"] = "date", ["value"] = (long)Math.Ceiling((date.ToUniversalTime() - Epoch).TotalSeconds) },
             object other => other,
@@ -506,5 +506,45 @@ public class Rfc8941ParserTests
         static JArray ConvertList(IReadOnlyList<ParsedItem> list) => new(list.Select(i => ConvertItem(i)));
 
         static JArray ConvertDictionary(IReadOnlyDictionary<string, ParsedItem> dictionary) => new(dictionary.Select(p => new JArray(p.Key, ConvertItem(p.Value))));
+
+        static string ToBase32StdString(ReadOnlySpan<byte> bytes)
+        {
+            if (bytes.Length == 0)
+            {
+                return "";
+            }
+
+            var length = ((((bytes.Length * 8) + 4) / 5) + 7) / 8 * 8;
+            var bitBuffer = 0;
+            var bitsInBuffer = 0;
+            var outputIndex = 0;
+            var pool = ArrayPool<char>.Shared;
+            var buffer = pool.Rent(length);
+            foreach (var b in bytes)
+            {
+                bitBuffer = (bitBuffer << 8) | b;
+                bitsInBuffer += 8;
+
+                while (bitsInBuffer >= 5)
+                {
+                    bitsInBuffer -= 5;
+                    buffer[outputIndex++] = Base32StdEncodeMap[(bitBuffer >> bitsInBuffer) & 0x1F];
+                }
+            }
+
+            if (bitsInBuffer > 0)
+            {
+                buffer[outputIndex++] = Base32StdEncodeMap[(bitBuffer << (5 - bitsInBuffer)) & 0x1F];
+            }
+
+            while (outputIndex < length)
+            {
+                buffer[outputIndex++] = '=';
+            }
+
+            var result = new string(buffer, 0, length);
+            pool.Return(buffer);
+            return result;
+        }
     }
 }
