@@ -21,6 +21,7 @@
     <DebugType>embedded</DebugType>
     <Deterministic>true</Deterministic>
     <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <AnalysisLevel>latest</AnalysisLevel>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
