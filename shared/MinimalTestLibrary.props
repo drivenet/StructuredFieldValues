@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
   <Import Project="Minimal.props" />
 
   <PropertyGroup Label="MinimalTestLibraryProjectSettings">
@@ -13,7 +13,7 @@
 
   <ItemGroup Label="MinimalTestPackageReferences">
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" PrivateAssets="All" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Label="MinimalTestConfigFiles">
