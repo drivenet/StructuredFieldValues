@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
@@ -1007,11 +1007,7 @@ internal static class Rfc8941Parser
                             return new(localIndex, "display string character is out of range");
                         }
 
-                        if (buffer is not null)
-                        {
-                            buffer[bufferLength++] = unchecked((byte)character);
-                        }
-
+                        buffer?[bufferLength++] = unchecked((byte)character);
                         break;
                 }
 

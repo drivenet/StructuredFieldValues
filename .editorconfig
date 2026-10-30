@@ -17,7 +17,7 @@ resharper_string_literal_typo_highlighting = do_not_show
 trim_trailing_whitespace = true
 
 
-[*.{xml,csproj,props,build,targets,config,ruleset,nuspec,resx,vsixmanifest,browser,wxs,wixproj}]
+[*.{xml,csproj,props,build,targets,config,ruleset,nuspec,resx,vsixmanifest,browser,wxs,wixproj,runsettings}]
 indent_size = 2
 
 
@@ -32,6 +32,7 @@ indent_size = 2
 
 [*.md]
 indent_size = 2
+trim_trailing_whitespace = true
 
 
 [*.pp]
@@ -59,5 +60,6 @@ indent_size = 2
 trim_trailing_whitespace = true
 
 
-[*.{bat,cmd,ps1}]
+[*.{bat,cmd,ps1,psd1,psm1}]
 end_of_line = crlf
+trim_trailing_whitespace = true
